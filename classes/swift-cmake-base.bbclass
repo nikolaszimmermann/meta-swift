@@ -38,6 +38,11 @@ HOST_CC_ARCH:prepend = "-target ${SWIFT_TARGET_NAME} "
 #                                                                              #
 ################################################################################
 
+# The swift-native ld.lld is dynamically linked against libxml2, so every
+# recipe that links with lld needs libxml2.so.2 staged in its native sysroot
+# or ld.lld fails to start.
+DEPENDS:append = " libxml2-native"
+
 # Add build-id to generated binaries
 TARGET_LDFLAGS:append = " -Xlinker --build-id=sha1"
 
