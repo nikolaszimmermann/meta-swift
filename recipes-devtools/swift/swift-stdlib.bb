@@ -219,6 +219,31 @@ do_install() {
 }
 
 do_install:append() {
+    # Swift's LINUX SDK builds and names the stdlib modules after its own triple
+    # (e.g. aarch64-unknown-linux-gnu), but every consumer recipe compiles with
+    # -target ${SWIFT_TARGET_NAME} (Yocto's TARGET_SYS, e.g. aarch64-poky-linux)
+    # so clang finds the per-triple sysroot headers. swiftc then looks for the
+    # stdlib modules under that target triple and fails with
+    # "could not find module 'Swift' for target '...poky-linux'".
+    # The stdlib build itself needs the gnu-named modules, so we cannot rename
+    # them. Instead, add target-triple-named copies alongside. swiftc loads them
+    # fine since the arch and OS match, only the vendor differs.
+    for base in ${D}${libdir}/swift/linux ${D}${libdir}/swift_static/linux; do
+        [ -d "${base}" ] || continue
+        for moddir in "${base}"/*.swiftmodule; do
+            [ -d "${moddir}" ] || continue
+            [ -e "${moddir}/${SWIFT_TARGET_NAME}.swiftmodule" ] && continue
+            for f in "${moddir}"/*; do
+                [ -e "${f}" ] || continue
+                bn=$(basename "${f}")
+                # strip the leading triple component, keep the suffix (e.g.
+                # "swiftmodule", "private.swiftinterface", "abi.json")
+                suffix="${bn#*.}"
+                cp -a "${f}" "${moddir}/${SWIFT_TARGET_NAME}.${suffix}"
+            done
+        done
+    done
+
     # Remove CxxStdlib interface files that don't work in cross-compilation
     # The binary .swiftmodule files work fine without them
     rm -f ${D}${libdir}/swift/linux/CxxStdlib.swiftmodule/*/swiftinterface
