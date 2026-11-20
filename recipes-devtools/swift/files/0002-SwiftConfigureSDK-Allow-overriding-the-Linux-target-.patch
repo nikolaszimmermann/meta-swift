@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Fri, 20 Nov 2026 23:56:06 +0100
+Subject: [PATCH 2/2] SwiftConfigureSDK: Allow overriding the Linux target
+ triple
+
+The Linux SDK hardcodes <arch>-unknown-linux-gnu (or -gnueabi[hf]) as the
+triple the runtime and its modules are built for. Distributions such as
+Yocto/OpenEmbedded use their own vendor in the triple (aarch64-poky-linux)
+and every C/C++ consumer is compiled for that triple. Swift modules built
+for the hardcoded triple then do not match the -target consumers pass.
+
+Honour SWIFT_SDK_LINUX_ARCH_<arch>_TRIPLE when it is already set, so the
+build configuration can pick the triple.
+
+Upstream-Status: Pending
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ cmake/modules/SwiftConfigureSDK.cmake | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/cmake/modules/SwiftConfigureSDK.cmake b/cmake/modules/SwiftConfigureSDK.cmake
+index 008ff5be..4eea0fe1 100644
+--- a/cmake/modules/SwiftConfigureSDK.cmake
++++ b/cmake/modules/SwiftConfigureSDK.cmake
+@@ -415,7 +415,10 @@ macro(configure_sdk_unix name architectures)
+     else()
+       set(SWIFT_SDK_${prefix}_ARCH_${arch}_PATH "/" CACHE STRING "CMAKE_SYSROOT for ${prefix} ${arch}")
+ 
+-      if("${prefix}" STREQUAL "LINUX")
++      if("${prefix}" STREQUAL "LINUX" AND SWIFT_SDK_LINUX_ARCH_${arch}_TRIPLE)
++        # Keep a triple provided by the build configuration, e.g. a
++        # distribution vendor triple such as aarch64-poky-linux.
++      elseif("${prefix}" STREQUAL "LINUX")
+         if(arch MATCHES "(armv5)")
+           set(SWIFT_SDK_LINUX_ARCH_${arch}_TRIPLE "${arch}-unknown-linux-gnueabi")
+         elseif(arch MATCHES "(armv6|armv7)")
