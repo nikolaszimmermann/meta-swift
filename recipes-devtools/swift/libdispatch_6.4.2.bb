@@ -20,8 +20,6 @@ S = "${SWIFT_LIBDISPATCH_SRCDIR}"
 
 inherit cmake
 
-# libdispatch relies on clang's blocks extension.
-TOOLCHAIN = "clang"
 
 EXTRA_OECMAKE = "\
     -DENABLE_SWIFT=OFF \
@@ -37,5 +35,10 @@ do_install:append() {
 }
 
 FILES:${PN}-dev += "${libdir}/cmake/dispatch"
+
+# The libraries are unversioned and loaded by that name.
+FILES_SOLIBSDEV = ""
+FILES:${PN} += "${libdir}/lib*.so"
+INSANE_SKIP:${PN} += "dev-so"
 
 BBCLASSEXTEND = "native nativesdk"

@@ -15,6 +15,8 @@ in a few places that assume a build tree:
   that copy over the one in the LLVM source tree.
 * clang's features.json lives in the install tree, make its location
   configurable through SWIFT_CLANG_FEATURES_FILE.
+* libSwiftScan depends on the clang target, which only exists in unified
+  builds. Only add that dependency when the target exists.
 * With a prebuilt clang, take the clang resource directory from
   `clang -print-resource-dir` for the compiler build too, not only for
   runtime-only builds.
@@ -28,8 +30,9 @@ Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
  cmake/modules/SwiftSharedCMakeConfig.cmake          | 7 ++++++-
  lib/Basic/CMakeLists.txt                            | 8 +++++++-
  lib/Option/CMakeLists.txt                           | 4 +++-
+ lib/Tooling/libSwiftScan/CMakeLists.txt             | 5 ++++-
  stdlib/public/SwiftShims/swift/shims/CMakeLists.txt | 4 ++--
- 4 files changed, 18 insertions(+), 5 deletions(-)
+ 5 files changed, 22 insertions(+), 6 deletions(-)
 
 diff --git a/cmake/modules/SwiftSharedCMakeConfig.cmake b/cmake/modules/SwiftSharedCMakeConfig.cmake
 index 94b674e2..62074ce6 100644
@@ -83,6 +86,23 @@ index 8659377a..46f27e1e 100644
  set(features_file_dest "${CMAKE_BINARY_DIR}/share/swift/features.json")
  
  add_custom_command(
+diff --git a/lib/Tooling/libSwiftScan/CMakeLists.txt b/lib/Tooling/libSwiftScan/CMakeLists.txt
+index cd68ea87..d6997712 100644
+--- a/lib/Tooling/libSwiftScan/CMakeLists.txt
++++ b/lib/Tooling/libSwiftScan/CMakeLists.txt
+@@ -17,8 +17,11 @@ if(SWIFT_HOST_VARIANT_SDK IN_LIST SWIFT_DARWIN_PLATFORMS)
+ endif()
+ 
+ add_dependencies(libSwiftScan
+-  clang
+   swiftDependencyScan)
++# There is no clang target to wait for when building against a prebuilt clang.
++if(TARGET clang)
++  add_dependencies(libSwiftScan clang)
++endif()
+ 
+ target_link_libraries(libSwiftScan PRIVATE
+     swiftDependencyScan
 diff --git a/stdlib/public/SwiftShims/swift/shims/CMakeLists.txt b/stdlib/public/SwiftShims/swift/shims/CMakeLists.txt
 index f3263df8..c601c497 100644
 --- a/stdlib/public/SwiftShims/swift/shims/CMakeLists.txt

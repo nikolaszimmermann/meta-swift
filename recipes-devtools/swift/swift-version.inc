@@ -38,3 +38,12 @@ python () {
     if d.getVar('SWIFT_UNIFIED_LLVM') != '1':
         raise bb.parse.SkipRecipe('requires conf/distro/include/swift-toolchain.inc')
 }
+
+# Everything Swift is built by the (swiftlang) clang, in every class. Plain
+# TOOLCHAIN would lose against meta-clang's TOOLCHAIN:class-native = "gcc".
+TOOLCHAIN = "clang"
+TOOLCHAIN:class-native = "clang"
+TOOLCHAIN:class-nativesdk = "clang"
+# meta-clang only adds the clang toolchain dependency for target recipes.
+DEPENDS:append:class-native = " clang-native"
+DEPENDS:append:class-nativesdk = " clang-crosssdk-${SDK_SYS}"

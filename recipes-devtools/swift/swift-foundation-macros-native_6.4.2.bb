@@ -14,7 +14,6 @@ S = "${SWIFT_UNPACKDIR}/swift-foundation-${SWIFT_TAG}"
 
 inherit cmake native
 
-TOOLCHAIN = "clang"
 DEPENDS += "swift-native ninja-native"
 
 OECMAKE_SOURCEPATH = "${S}/Sources/FoundationMacros"

@@ -33,8 +33,7 @@ S = "${SWIFT_SRCDIR}"
 
 inherit cmake python3native
 
-TOOLCHAIN = "clang"
-DEPENDS += "clang-native ninja-native libxml2-native util-linux-native zlib-native ncurses-native libedit-native"
+DEPENDS += "clang-native ninja-native libxml2-native util-linux-native zlib-native ncurses-native libedit-native libdispatch-native"
 
 # Where this stage installs. Bootstrap stages stay out of the regular prefix.
 SWIFT_STAGE_PREFIX ?= "${prefix}"
@@ -69,6 +68,7 @@ EXTRA_OECMAKE = "\
     -DSWIFT_PATH_TO_CMARK_SOURCE=${SWIFT_CMARK_SRCDIR} \
     -DSWIFT_PATH_TO_CMARK_BUILD=${SWIFT_CMARK_BUILDDIR} \
     -DSWIFT_PATH_TO_LIBDISPATCH_SOURCE=${SWIFT_LIBDISPATCH_SRCDIR} \
+    -Ddispatch_DIR=${STAGING_LIBDIR_NATIVE}/cmake/dispatch \
     -DBOOTSTRAPPING_MODE=HOSTTOOLS \
     -DSWIFT_INCLUDE_TESTS=OFF \
     -DSWIFT_INCLUDE_DOCS=OFF \
