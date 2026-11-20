@@ -1,0 +1,5 @@
+module Greeter {
+    header "Greeter.h"
+    requires cplusplus
+    export *
+}

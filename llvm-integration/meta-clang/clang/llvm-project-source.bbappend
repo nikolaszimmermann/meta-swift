@@ -42,5 +42,6 @@ SRC_URI:swiftllvm = "\
     file://0019-llvm-Insert-anchor-for-adding-OE-distro-vendor-names.patch \
     file://0024-Fix-lib-paths-for-OpenEmbedded-Host.patch \
     file://0005-llvm-allow-env-override-of-exe-and-libdir-path.patch \
+    file://0100-lldb-Only-install-the-copied-clang-resource-director.patch \
 "
 SRC_URI[swiftllvm.sha256sum] = "${SWIFT_LLVM_SHA256}"

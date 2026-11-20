@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+swift-hello | grep -q "Hello from Swift" && echo "PASS: swift-hello" || { echo "FAIL: swift-hello"; exit 1; }
+swift-cxx-interop-test && echo "PASS: swift-cxx-interop-test" || { echo "FAIL: swift-cxx-interop-test"; exit 1; }
