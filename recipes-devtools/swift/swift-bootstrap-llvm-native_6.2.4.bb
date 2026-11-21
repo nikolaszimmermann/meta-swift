@@ -26,6 +26,7 @@ def swift_bootstrap_llvm_target(d):
     return {'x86_64': 'X86', 'aarch64': 'AArch64'}.get(arch, 'X86;AArch64')
 
 EXTRA_OECMAKE = "\
+    -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=${SWIFT_BOOTSTRAP_LLVM_PREFIX} \
     -DLLVM_ENABLE_PROJECTS='clang;lld' \
     -DLLVM_TARGETS_TO_BUILD='${@swift_bootstrap_llvm_target(d)}' \

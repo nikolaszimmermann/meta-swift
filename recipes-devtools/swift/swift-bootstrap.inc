@@ -28,7 +28,7 @@ DEPENDS += "swift-bootstrap-llvm-native"
 
 # Built by, and embedding, the bootstrap LLVM. Swift's runtime has to be built
 # with the very clang it embeds, so this is also the C/C++ compiler.
-SWIFT_LLVM_PREFIX = "${STAGING_DIR_NATIVE}${libexecdir}/swift-bootstrap-llvm"
+SWIFT_LLVM_PREFIX = "${STAGING_DIR_NATIVE}${libexecdir_native}/swift-bootstrap-llvm"
 OECMAKE_C_COMPILER = "${SWIFT_LLVM_PREFIX}/bin/clang"
 OECMAKE_CXX_COMPILER = "${SWIFT_LLVM_PREFIX}/bin/clang++"
 

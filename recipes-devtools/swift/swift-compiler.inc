@@ -35,7 +35,7 @@ SWIFT_STAGE_PREFIX ?= "${prefix}"
 
 # The LLVM/clang this compiler is built against and embeds. By default the
 # clang-native of this build (the swiftlang fork of SWIFT_VERSION).
-SWIFT_LLVM_PREFIX ?= "${STAGING_DIR_NATIVE}${prefix}"
+SWIFT_LLVM_PREFIX ?= "${STAGING_DIR_NATIVE}${prefix_native}"
 
 # cmark is a build-time only dependency of the compiler (doc comments).
 SWIFT_CMARK_BUILDDIR = "${WORKDIR}/build-cmark"
@@ -49,6 +49,7 @@ do_configure:prepend() {
         -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DCMARK_TESTS=OFF \
+        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
         -DCMARK_SHARED=OFF
     ninja -C ${SWIFT_CMARK_BUILDDIR} ${PARALLEL_MAKE}
 }
@@ -56,6 +57,7 @@ do_configure:prepend() {
 SWIFT_INSTALL_COMPONENTS ?= "autolink-driver;compiler;clang-resource-dir-symlink;stdlib;sdk-overlay;toolchain-tools;license"
 
 EXTRA_OECMAKE = "\
+    -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=${SWIFT_STAGE_PREFIX} \
     -DCMAKE_LINKER_TYPE=LLD \
     -DLLVM_DIR=${SWIFT_LLVM_PREFIX}/lib/cmake/llvm \
@@ -81,3 +83,20 @@ EXTRA_OECMAKE = "\
     -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=ON \
     -DSWIFT_INSTALL_COMPONENTS='${SWIFT_INSTALL_COMPONENTS}' \
 "
+
+# Swift links lib/swift{,_static}/clang to the clang resource directory it
+# found at configure time, as an absolute path. Make it relative so the
+# sysroot stays relocatable.
+do_install:append() {
+    for dir in ${D}${SWIFT_STAGE_PREFIX}/lib/swift ${D}${SWIFT_STAGE_PREFIX}/lib/swift_static; do
+        link="$dir/clang"
+        [ -L "$link" ] || continue
+        target=$(readlink "$link")
+        case "$target" in
+            /*)
+                installed_dir=${dir#${D}}
+                ln -snf "$(realpath -m --relative-to="$installed_dir" "$target")" "$link"
+                ;;
+        esac
+    done
+}

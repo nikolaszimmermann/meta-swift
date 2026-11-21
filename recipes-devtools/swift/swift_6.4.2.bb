@@ -24,7 +24,7 @@ EXTRA_OECMAKE += "\
     -DSWIFT_ENABLE_BACKTRACING=ON \
     -DSWIFT_ENABLE_RUNTIME_MODULE=ON \
 "
-EXTRA_OECMAKE:append:class-native = " -DCMAKE_Swift_COMPILER=${STAGING_DIR_NATIVE}${libexecdir}/swift-stage3/bin/swiftc"
+EXTRA_OECMAKE:append:class-native = " -DCMAKE_Swift_COMPILER=${STAGING_DIR_NATIVE}${libexecdir_native}/swift-stage3/bin/swiftc"
 
 SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;stdlib;sdk-overlay;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib;license"
 

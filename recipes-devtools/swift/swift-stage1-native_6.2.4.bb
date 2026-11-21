@@ -15,7 +15,7 @@ SRC_URI += "\
 SWIFT_STAGE_PREFIX = "${libexecdir}/swift-stage1"
 
 EXTRA_OECMAKE += "\
-    -DCMAKE_Swift_COMPILER=${STAGING_DIR_NATIVE}${libexecdir}/swift-stage0/bin/swiftc \
+    -DCMAKE_Swift_COMPILER=${STAGING_DIR_NATIVE}${libexecdir_native}/swift-stage0/bin/swiftc \
     -DCMAKE_Swift_FLAGS='-Xfrontend -disable-sil-ownership-verifier' \
     -DSWIFT_ENABLE_SWIFT_IN_SWIFT=ON \
     -DSWIFT_BUILD_SWIFT_SYNTAX=ON \
