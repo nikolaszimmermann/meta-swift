@@ -39,5 +39,15 @@ EXTRA_OECMAKE = "\
 "
 
 FILES:${PN} = "${libdir}/swift/linux/lib*${SOLIBSDEV}"
-FILES:${PN}-dev = "${libdir}/swift"
+# Everything but the runtime libraries: modules, module maps and headers.
+FILES:${PN}-dev = "\
+    ${libdir}/swift/linux/*.swiftmodule \
+    ${libdir}/swift/linux/*.swiftdoc \
+    ${libdir}/swift/linux/*.swiftinterface \
+    ${libdir}/swift/linux/${SWIFT_TARGET_ARCH} \
+    ${libdir}/swift/[!l]* \
+    ${libdir}/swift/lib*.a \
+    ${libdir}/swift/linux/*.a \
+    ${libdir}/cmake \
+"
 INSANE_SKIP:${PN} = "dev-so"

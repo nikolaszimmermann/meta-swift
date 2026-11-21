@@ -30,6 +30,11 @@ DEPENDS += "libdispatch clang-native"
 # SWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS). Here the clang driver finds
 # the gcc install and libstdc++ of the target sysroot by itself.
 #
+# The runtime is built without C++ exceptions, like upstream. Upstream gets
+# that from LLVM's CMake (LLVM_ENABLE_EH=OFF); meta-clang's LLVM has EH on, so
+# say it explicitly. Otherwise the Objective-C++ sources of the runtime pull in
+# __gnu_objc_personality_v0, which nothing provides on Linux.
+#
 # The runtime pieces are written in C++ and compiled by clang-cross; the
 # Swift parts by swift-native. Both are the same swiftlang LLVM.
 SWIFT_THREADING_PACKAGE = "${@oe.utils.conditional('SWIFT_TARGET_ARCH', 'armv7', 'c11', 'linux', d)}"
@@ -64,6 +69,7 @@ EXTRA_OECMAKE = "\
     -DSWIFT_PATH_TO_LIBDISPATCH_SOURCE=${SWIFT_LIBDISPATCH_SRCDIR} \
     -DSWIFT_THREADING_PACKAGE=${SWIFT_THREADING_PACKAGE} \
     -DSWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS= \
+    -DSWIFT_STDLIB_EXTRA_C_COMPILE_FLAGS=-fno-exceptions \
     -DSWIFT_BUILD_DYNAMIC_STDLIB=ON \
     -DSWIFT_BUILD_DYNAMIC_SDK_OVERLAY=ON \
     -DSWIFT_BUILD_STATIC_STDLIB=OFF \
