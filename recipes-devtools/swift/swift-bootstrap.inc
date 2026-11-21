@@ -33,7 +33,7 @@ OECMAKE_C_COMPILER = "${SWIFT_LLVM_PREFIX}/bin/clang"
 OECMAKE_CXX_COMPILER = "${SWIFT_LLVM_PREFIX}/bin/clang++"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files/bootstrap-6.2:"
-SRC_URI:remove = "file://0002-SwiftConfigureSDK-Allow-overriding-the-Linux-target-.patch"
+SRC_URI:remove = "file://0002-SwiftConfigureSDK-Allow-overriding-the-Linux-target-.patch file://0003-sil-missing-headers.patch"
 SRC_URI += "\
     file://0004-sil-missing-headers.patch \
     file://0011-Fix-missing-cstdint.patch \

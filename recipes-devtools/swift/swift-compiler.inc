@@ -21,6 +21,7 @@ SRC_URI = "\
     ${SRC_URI_SWIFT_LIBDISPATCH} \
     file://0001-cmake-Support-standalone-builds-against-an-installed.patch \
     file://0002-SwiftConfigureSDK-Allow-overriding-the-Linux-target-.patch \
+    file://0003-sil-missing-headers.patch \
 "
 SRC_URI_SWIFT_IN_SWIFT = "${SRC_URI_SWIFT_STRING_PROCESSING} ${SRC_URI_SWIFT_SYNTAX}"
 
@@ -55,6 +56,11 @@ do_configure:prepend() {
 }
 
 SWIFT_INSTALL_COMPONENTS ?= "autolink-driver;compiler;clang-resource-dir-symlink;stdlib;sdk-overlay;toolchain-tools;license"
+
+# Build exactly what gets installed: every install component has a build
+# target of the same name, and some (e.g. the swift-syntax libraries) are not
+# part of the default target.
+OECMAKE_TARGET_COMPILE = "${@d.getVar('SWIFT_INSTALL_COMPONENTS').replace(';', ' ')}"
 
 EXTRA_OECMAKE = "\
     -DCMAKE_BUILD_TYPE=Release \

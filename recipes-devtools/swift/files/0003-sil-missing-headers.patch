@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Sat, 21 Nov 2026 03:09:59 +0100
+Subject: [PATCH] ASTBridging: Include the clang headers that complete
+ DeclContext's iterators
+
+When the Swift sources of the compiler are imported into Swift, the inline
+bridging code pulls in clang::DeclContext, whose lookups() and ddiags()
+return iterator_range<> over all_lookups_iterator and ddiag_iterator. Those
+are only forward declared by clang/AST/DeclBase.h, and the clang importer
+then fails with "field has incomplete type" when instantiating them.
+
+Include the clang headers that define them. Adapted from the nixpkgs Swift
+packaging (sil-missing-headers.patch).
+
+Upstream-Status: Pending
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ include/swift/AST/ASTBridging.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/swift/AST/ASTBridging.h b/include/swift/AST/ASTBridging.h
+index 8834eee6..8c601c76 100644
+--- a/include/swift/AST/ASTBridging.h
++++ b/include/swift/AST/ASTBridging.h
+@@ -32,6 +32,8 @@
+ #ifdef NOT_COMPILED_WITH_SWIFT_PURE_BRIDGING_MODE
+ #include "swift/AST/Attr.h"
+ #include "swift/AST/Decl.h"
++#include "clang/AST/DeclLookups.h"
++#include "clang/AST/DependentDiagnostic.h"
+ #endif
+ 
+ #include <utility>

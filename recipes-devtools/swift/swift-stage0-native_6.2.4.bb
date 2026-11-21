@@ -21,3 +21,6 @@ EXTRA_OECMAKE += "\
     -DSWIFT_ENABLE_EXPERIMENTAL_DIFFERENTIABLE_PROGRAMMING=OFF \
     -DSWIFT_BUILD_LIBEXEC=OFF \
 "
+
+# Stage 0 has no swift-syntax; its default target already covers everything.
+OECMAKE_TARGET_COMPILE = "all"
