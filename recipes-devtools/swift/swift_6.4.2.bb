@@ -28,6 +28,29 @@ EXTRA_OECMAKE:append:class-native = " -DCMAKE_Swift_COMPILER=${STAGING_DIR_NATIV
 
 SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;stdlib;sdk-overlay;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib;license"
 
+# The SDK host compiler is cross-compiled: swift-native compiles its Swift
+# parts for the SDK host, clang-crosssdk its C++ parts, and it embeds (links)
+# the SDK host's clang, nativesdk-clang, i.e. the same swiftlang LLVM.
+DEPENDS:append:class-nativesdk = " swift-native nativesdk-clang nativesdk-libdispatch nativesdk-libxml2 nativesdk-zlib nativesdk-ncurses nativesdk-libedit nativesdk-util-linux"
+SWIFT_LLVM_PREFIX:class-nativesdk = "${STAGING_DIR_HOST}${prefix}"
+EXTRA_OECMAKE:remove:class-nativesdk = "\
+    -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
+    -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
+"
+EXTRA_OECMAKE:append:class-nativesdk = "\
+    -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
+    -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
+    -DBOOTSTRAPPING_MODE=CROSSCOMPILE \
+    -DSWIFT_NATIVE_SWIFT_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
+    -DCMAKE_Swift_COMPILER=${STAGING_BINDIR_NATIVE}/swiftc \
+    -DCMAKE_Swift_COMPILER_TARGET=${HOST_SYS} \
+    -DCMAKE_Swift_FLAGS='-sdk ${STAGING_DIR_HOST}' \
+    -DLLVM_TABLEGEN=${STAGING_BINDIR_NATIVE}/llvm-tblgen \
+    -DSWIFT_HOST_VARIANT_SDK=LINUX \
+    -DSWIFT_HOST_VARIANT_ARCH=${HOST_ARCH} \
+    -Ddispatch_DIR=${STAGING_LIBDIR}/cmake/dispatch \
+"
+
 BBCLASSEXTEND = "native nativesdk"
 
 python () {
