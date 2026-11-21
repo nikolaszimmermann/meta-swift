@@ -46,7 +46,8 @@ SWIFTFLAGS ?= "\
 # LDFLAGS (meta-clang's clang.bbclass), which the Swift link does not see.
 def swift_sdk_dynamic_linker_flags(d):
     import re
-    m = re.search(r'-Wl,-{1,2}dynamic-linker[,=](\S+)', d.getVar('LDFLAGS') or '')
+    # LDFLAGS may already be in swiftc form (swift-cmake-tool.bbclass).
+    m = re.search(r'(?:-Wl,|-Xlinker\s+)-{1,2}dynamic-linker(?:[,=]|\s+-Xlinker\s+)(\S+)', d.getVar('LDFLAGS') or '')
     return '-Xlinker -dynamic-linker -Xlinker %s' % m.group(1) if m else ''
 SWIFTFLAGS:remove:class-nativesdk = "-use-ld=lld"
 SWIFTFLAGS:append:class-nativesdk = " -use-ld=bfd ${@swift_sdk_dynamic_linker_flags(d)}"
