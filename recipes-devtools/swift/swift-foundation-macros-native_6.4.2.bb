@@ -19,6 +19,7 @@ DEPENDS += "swift-native ninja-native"
 OECMAKE_SOURCEPATH = "${S}/Sources/FoundationMacros"
 
 EXTRA_OECMAKE = "\
+    -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_Swift_COMPILER=${STAGING_BINDIR_NATIVE}/swiftc \
     -DCMAKE_LINKER_TYPE=LLD \
     -DFETCHCONTENT_FULLY_DISCONNECTED=ON \

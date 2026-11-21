@@ -24,6 +24,7 @@ inherit swift-cmake
 DEPENDS += "swift-dispatch swift-foundation-macros-native curl libxml2"
 
 EXTRA_OECMAKE = "\
+    -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=ON \
     -DBUILD_TESTING=OFF \
     -DFOUNDATION_BUILD_TOOLS=OFF \

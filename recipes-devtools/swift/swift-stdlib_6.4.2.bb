@@ -16,6 +16,7 @@ SRC_URI = "\
     ${SRC_URI_SWIFT} \
     ${SRC_URI_SWIFT_STRING_PROCESSING} \
     ${SRC_URI_SWIFT_SYNTAX} \
+    ${SRC_URI_SWIFT_LIBDISPATCH} \
     file://0001-cmake-Support-standalone-builds-against-an-installed.patch \
     file://0002-SwiftConfigureSDK-Allow-overriding-the-Linux-target-.patch \
 "
@@ -25,11 +26,16 @@ inherit swift-base cmake python3native
 
 DEPENDS += "libdispatch clang-native"
 
+# Upstream points the C++ overlay at the build host's gcc (--gcc-toolchain=/usr,
+# SWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS). Here the clang driver finds
+# the gcc install and libstdc++ of the target sysroot by itself.
+#
 # The runtime pieces are written in C++ and compiled by clang-cross; the
 # Swift parts by swift-native. Both are the same swiftlang LLVM.
 SWIFT_THREADING_PACKAGE = "${@oe.utils.conditional('SWIFT_TARGET_ARCH', 'armv7', 'c11', 'linux', d)}"
 
 EXTRA_OECMAKE = "\
+    -DCMAKE_BUILD_TYPE=Release \
     -DLLVM_DIR=${STAGING_LIBDIR_NATIVE}/cmake/llvm \
     -DClang_DIR=${STAGING_LIBDIR_NATIVE}/cmake/clang \
     -DLLVM_TABLEGEN=${STAGING_BINDIR_NATIVE}/llvm-tblgen \
@@ -55,7 +61,9 @@ EXTRA_OECMAKE = "\
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_LIBC_INCLUDE_DIRECTORY=${STAGING_INCDIR} \
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_LIBC_ARCHITECTURE_INCLUDE_DIRECTORY=${STAGING_INCDIR} \
     -Ddispatch_DIR=${STAGING_LIBDIR}/cmake/dispatch \
+    -DSWIFT_PATH_TO_LIBDISPATCH_SOURCE=${SWIFT_LIBDISPATCH_SRCDIR} \
     -DSWIFT_THREADING_PACKAGE=${SWIFT_THREADING_PACKAGE} \
+    -DSWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS= \
     -DSWIFT_BUILD_DYNAMIC_STDLIB=ON \
     -DSWIFT_BUILD_DYNAMIC_SDK_OVERLAY=ON \
     -DSWIFT_BUILD_STATIC_STDLIB=OFF \
@@ -75,7 +83,7 @@ EXTRA_OECMAKE = "\
     -DSWIFT_ENABLE_RUNTIME_MODULE=ON \
     -DSWIFT_STDLIB_INSTALL_ONLY_CLANG_RESOURCE_HEADERS=ON \
     -DSWIFT_INSTALL_COMPONENTS='stdlib;sdk-overlay;clang-builtin-headers;license' \
-    -DSWIFT_STANDARD_LIBRARY_SWIFT_FLAGS='${@swift_xcc_flags(d)}' \
+    -DSWIFT_STANDARD_LIBRARY_SWIFT_FLAGS='${@swift_xcc_flags_cmake_list(d)}' \
 "
 
 FILES:${PN} = "\

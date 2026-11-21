@@ -15,6 +15,7 @@ S = "${SWIFT_LIBDISPATCH_SRCDIR}"
 inherit swift-cmake
 
 EXTRA_OECMAKE = "\
+    -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_SWIFT=ON \
     -DBUILD_TESTING=OFF \
     -DBUILD_SHARED_LIBS=ON \

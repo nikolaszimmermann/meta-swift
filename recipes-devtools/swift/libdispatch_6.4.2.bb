@@ -22,6 +22,7 @@ inherit cmake
 
 
 EXTRA_OECMAKE = "\
+    -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_SWIFT=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_SHARED_LIBS=ON \
