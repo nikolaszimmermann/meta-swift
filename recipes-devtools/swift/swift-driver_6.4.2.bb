@@ -48,6 +48,13 @@ EXTRA_OECMAKE = "\
 
 FILES:${PN} += "${bindir}"
 
+# llbuild installs its static Swift bindings, which are linked into the
+# driver already.
+do_install:append() {
+    rm -rf ${D}${libdir}/swift/pm
+    rmdir --ignore-fail-on-non-empty ${D}${libdir}/swift
+}
+
 # Only the SDK host needs it (see DESCRIPTION).
 BBCLASSEXTEND = "nativesdk"
 
