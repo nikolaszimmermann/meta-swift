@@ -34,6 +34,7 @@ SWIFTFLAGS ?= "\
     -sdk ${STAGING_DIR_TARGET} \
     -resource-dir ${SWIFT_RESOURCE_DIR} \
     -use-ld=lld \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-Xclang-linker --dyld-prefix=/usr', '', d)} \
     ${@swift_xcc_flags(d)} \
     ${SWIFT_DEBUG_PREFIX_MAP} \
 "
