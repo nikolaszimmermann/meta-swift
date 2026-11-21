@@ -43,3 +43,6 @@ FILES:${PN}-dev = "\
     ${libdir}/cmake \
 "
 INSANE_SKIP:${PN} = "dev-so"
+
+# The SDK host needs them to run swift-driver.
+BBCLASSEXTEND = "nativesdk"

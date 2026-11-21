@@ -12,12 +12,15 @@ inherit swift-triple
 TOOLCHAIN = "clang"
 
 DEPENDS:append:class-target = " swift-native"
+# For the SDK host, swift-native cross-compiles against the SDK host's Swift
+# runtime, which nativesdk-swift provides.
+DEPENDS:append:class-nativesdk = " swift-native nativesdk-swift"
 
 SWIFTC = "${STAGING_BINDIR_NATIVE}/swiftc"
 
 # The Swift runtime, its modules and the matching clang resource headers live
 # in the target sysroot (installed by swift-stdlib), not next to swiftc.
-SWIFT_RESOURCE_DIR = "${STAGING_DIR_TARGET}${libdir}/swift"
+SWIFT_RESOURCE_DIR = "${STAGING_DIR_HOST}${libdir}/swift"
 
 SWIFT_DEBUG_PREFIX_MAP = "\
     -file-prefix-map ${S}=${TARGET_DBGSRC_DIR} \
@@ -31,10 +34,10 @@ SWIFT_DEBUG_PREFIX_MAP = "\
 # an rpath into the build sysroot.
 SWIFTFLAGS ?= "\
     -no-toolchain-stdlib-rpath \
-    -sdk ${STAGING_DIR_TARGET} \
+    -sdk ${STAGING_DIR_HOST} \
     -resource-dir ${SWIFT_RESOURCE_DIR} \
     -use-ld=lld \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-Xclang-linker --dyld-prefix=/usr', '', d)} \
+    ${SWIFT_DYLD_PREFIX_FLAGS} \
     ${@swift_xcc_flags(d)} \
     ${SWIFT_DEBUG_PREFIX_MAP} \
 "
@@ -42,3 +45,8 @@ SWIFTFLAGS ?= "\
 # Libraries built with Swift depend on the Swift runtime, which is not in the
 # default library path: let the linker find it when linking their users.
 TARGET_LDFLAGS:append:class-target = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/linux"
+LDFLAGS:append:class-nativesdk = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/linux"
+
+# Like clang.bbclass, link with the usrmerge dynamic loader path on the target.
+SWIFT_DYLD_PREFIX_FLAGS = ""
+SWIFT_DYLD_PREFIX_FLAGS:class-target = "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-Xclang-linker --dyld-prefix=/usr', '', d)}"

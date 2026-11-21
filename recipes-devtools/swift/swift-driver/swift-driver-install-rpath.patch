@@ -1,0 +1,31 @@
+From: Patrick Griffis
+Subject: [PATCH] swift-driver-install-rpath
+
+Taken from the WebKit container SDK (github.com/Igalia/webkit-container-sdk,
+images/wkdev_sdk/jhbuild/patches).
+
+Upstream-Status: Inappropriate [packaging]
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+--- a/Sources/swift-driver/CMakeLists.txt
++++ b/Sources/swift-driver/CMakeLists.txt
+@@ -11,6 +11,8 @@
+ target_link_libraries(swift-driver PUBLIC
+   SwiftDriver
+   SwiftDriverExecution)
++set_target_properties(swift-driver PROPERTIES
++  INSTALL_RPATH_USE_LINK_PATH TRUE)
+ 
+ install(TARGETS swift-driver
+   DESTINATION bin)
+--- a/Sources/swift-build-sdk-interfaces/CMakeLists.txt
++++ b/Sources/swift-build-sdk-interfaces/CMakeLists.txt
+@@ -11,6 +11,8 @@
+ target_link_libraries(swift-build-sdk-interfaces PUBLIC
+   SwiftDriver
+   SwiftDriverExecution)
++set_target_properties(swift-build-sdk-interfaces PROPERTIES
++  INSTALL_RPATH_USE_LINK_PATH TRUE)
+ 
+ install(TARGETS swift-build-sdk-interfaces
+   DESTINATION bin)

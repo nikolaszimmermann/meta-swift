@@ -2,11 +2,13 @@
 # swiftc has to hand to its embedded clang. Shared by the recipe classes and
 # the SDK environment.
 
-# The Swift triple: Yocto's TARGET_SYS, except on 32-bit arm where the bare
+# The Swift triple of the machine the code runs on (HOST_SYS: the target for
+# target recipes, the SDK host for nativesdk ones). Yocto's triple is used as is,
+# except on 32-bit arm where the bare
 # "arm" arch is not a Swift platform and the hard-float ABI has to be in the
 # triple (Yocto conveys it through -mfloat-abi=hard instead).
-SWIFT_TARGET_ARCH = "${@oe.utils.conditional('TARGET_ARCH', 'arm', 'armv7', d.getVar('TARGET_ARCH'), d)}"
-SWIFT_TARGET = "${@oe.utils.conditional('TARGET_ARCH', 'arm', d.getVar('TARGET_SYS').replace('arm-', 'armv7-', 1) + 'hf', d.getVar('TARGET_SYS'), d)}"
+SWIFT_TARGET_ARCH = "${@oe.utils.conditional('HOST_ARCH', 'arm', 'armv7', d.getVar('HOST_ARCH'), d)}"
+SWIFT_TARGET = "${@oe.utils.conditional('HOST_ARCH', 'arm', d.getVar('HOST_SYS').replace('arm-', 'armv7-', 1) + 'hf', d.getVar('HOST_SYS'), d)}"
 
 # Only the tune (-mcpu, -mfloat-abi, ...) flags: they change the ABI and the
 # available intrinsics, so the importer must see them. Optimization and
