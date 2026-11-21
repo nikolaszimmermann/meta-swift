@@ -12,9 +12,7 @@ inherit swift-triple
 TOOLCHAIN = "clang"
 
 DEPENDS:append:class-target = " swift-native"
-# For the SDK host, swift-native cross-compiles against the SDK host's Swift
-# runtime, which nativesdk-swift provides.
-DEPENDS:append:class-nativesdk = " swift-native nativesdk-swift"
+DEPENDS:append:class-nativesdk = " swift-native"
 
 SWIFTC = "${STAGING_BINDIR_NATIVE}/swiftc"
 

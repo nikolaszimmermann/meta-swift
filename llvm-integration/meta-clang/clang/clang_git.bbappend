@@ -17,3 +17,20 @@ do_install:append:class-native:swiftllvm() {
 do_install:append:class-nativesdk:swiftllvm() {
     swift_install_llvm_config_h
 }
+
+# The fork's IndexStore headers are installed below ${prefix}/local/include;
+# put them with the other headers. Only for the packaged classes (the native
+# sysroot does not care, and changing clang-native would rebuild all of Swift).
+swift_move_indexstore_headers() {
+    if [ -d ${D}${prefix}/local/include/indexstore ]; then
+        install -d ${D}${includedir}
+        mv ${D}${prefix}/local/include/indexstore ${D}${includedir}/
+        rmdir --ignore-fail-on-non-empty ${D}${prefix}/local/include ${D}${prefix}/local
+    fi
+}
+do_install:append:class-nativesdk:swiftllvm() {
+    swift_move_indexstore_headers
+}
+do_install:append:class-target:swiftllvm() {
+    swift_move_indexstore_headers
+}

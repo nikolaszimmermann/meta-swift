@@ -1,7 +1,7 @@
 SUMMARY = "Swift standard library and runtime"
 DESCRIPTION = "The Swift runtime, standard library, Concurrency, Synchronization, \
-C++ interoperability and the other core modules, built for the target by \
-swift-native and the swiftlang clang of this build."
+C++ interoperability and the other core modules, built for the target (or \
+the SDK host) by swift-native and the swiftlang clang of this build."
 HOMEPAGE = "https://www.swift.org"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f6c482a0548ea60d6c2e015776534035"
@@ -61,7 +61,7 @@ EXTRA_OECMAKE = "\
     -DSWIFT_HOST_VARIANT_ARCH=${SWIFT_TARGET_ARCH} \
     -DSWIFT_PRIMARY_VARIANT_SDK=LINUX \
     -DSWIFT_PRIMARY_VARIANT_ARCH=${SWIFT_TARGET_ARCH} \
-    -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_PATH=${STAGING_DIR_TARGET} \
+    -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_PATH=${STAGING_DIR_HOST} \
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_TRIPLE=${SWIFT_TARGET} \
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_LIBC_INCLUDE_DIRECTORY=${STAGING_INCDIR} \
     -DSWIFT_SDK_LINUX_ARCH_${SWIFT_TARGET_ARCH}_LIBC_ARCHITECTURE_INCLUDE_DIRECTORY=${STAGING_INCDIR} \
@@ -92,6 +92,8 @@ EXTRA_OECMAKE = "\
     -DSWIFT_STANDARD_LIBRARY_SWIFT_FLAGS='${@swift_xcc_flags_cmake_list(d)}' \
 "
 
+BBCLASSEXTEND = "nativesdk"
+
 FILES:${PN} = "\
     ${libdir}/swift/linux/lib*${SOLIBSDEV} \
 "
@@ -112,7 +114,8 @@ FILES:${PN}-dev = "\
 "
 # The Swift runtime libraries are unversioned .so files loaded by SONAME.
 INSANE_SKIP:${PN} = "dev-so"
-INSANE_SKIP:${PN}-dev = "dev-elf"
+# The C++ interop overlays (libswiftCxx*.a) are only usable with their modules.
+INSANE_SKIP:${PN}-dev = "dev-elf staticdev"
 
 # Only the dynamic stdlib is built, but the static resource directory (clang
 # headers, link arguments) is installed regardless.

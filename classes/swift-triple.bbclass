@@ -13,10 +13,14 @@ SWIFT_TARGET = "${@oe.utils.conditional('HOST_ARCH', 'arm', d.getVar('HOST_SYS')
 # Only the tune (-mcpu, -mfloat-abi, ...) flags: they change the ABI and the
 # available intrinsics, so the importer must see them. Optimization and
 # hardening flags are for the C/C++ compilers.
+# TUNE_CCARGS describes the target machine. The SDK host uses SDK_CC_ARCH.
+SWIFT_TUNE_CCARGS = "${TUNE_CCARGS}"
+SWIFT_TUNE_CCARGS:class-nativesdk = "${SDK_CC_ARCH}"
+
 def swift_xcc_args(d):
     import shlex
     args = []
-    for f in shlex.split(d.getVar('TUNE_CCARGS') or ''):
+    for f in shlex.split(d.getVar('SWIFT_TUNE_CCARGS') or ''):
         args += ['-Xcc', f]
     return args
 

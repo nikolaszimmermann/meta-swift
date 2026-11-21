@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Sat, 21 Nov 2026 21:30:00 +0100
+Subject: [PATCH] SwiftCompilerSources: Use SwiftShims from
+ SWIFT_PATH_TO_SWIFT_SDK
+
+On Linux the compiler sources find the SwiftShims headers next to the
+build compiler. When the compiler is built against the runtime of another
+SDK (SWIFT_PATH_TO_SWIFT_SDK, with a matching -resource-dir in
+SWIFT_COMPILER_SOURCES_SDK_FLAGS), the shims of both get loaded and the
+Clang importer fails with "redefinition of module 'SwiftShims'".
+
+Only search the given SDK in that case.
+
+Upstream-Status: Pending
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ SwiftCompilerSources/CMakeLists.txt | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/SwiftCompilerSources/CMakeLists.txt b/SwiftCompilerSources/CMakeLists.txt
+--- a/SwiftCompilerSources/CMakeLists.txt
++++ b/SwiftCompilerSources/CMakeLists.txt
+@@ -224,6 +224,10 @@
+     string(STRIP "${swiftly_dir}" swiftly_dir)
+ 
+     list(APPEND sdk_option "-I" "${swiftly_dir}/usr/lib" "-I" "${swiftly_dir}/usr/lib")
++  elseif(SWIFT_PATH_TO_SWIFT_SDK)
++    # The Swift runtime and SwiftShims come from the given SDK, not from the
++    # toolchain of the build compiler. Using both defines the shims twice.
++    list(APPEND sdk_option "-I" "${SWIFT_PATH_TO_SWIFT_SDK}/usr/lib")
+   else()
+     list(APPEND sdk_option "-I" "${swift_exec_bin_dir}/../lib" "-I" "${sdk_path}/usr/lib")
+   endif()
