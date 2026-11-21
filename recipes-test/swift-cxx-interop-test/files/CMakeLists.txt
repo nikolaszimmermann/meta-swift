@@ -19,9 +19,15 @@ add_executable(swift-hello hello.swift)
 
 # A C++ executable calling into Swift through the generated header.
 add_executable(swift-cxx-interop-test main.cpp)
-add_dependencies(swift-cxx-interop-test SwiftGreeter)
+# The Swift-to-C++ header is a by-product of compiling SwiftGreeter: compile
+# main.cpp only once the library (and with it the header) exists.
+set_source_files_properties(main.cpp PROPERTIES
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libSwiftGreeter.so)
 target_include_directories(swift-cxx-interop-test PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(swift-cxx-interop-test PRIVATE SwiftGreeter)
+# The generated header inlines calls into the Swift runtime, so a C++
+# consumer links it directly.
+target_link_directories(swift-cxx-interop-test PRIVATE ${CMAKE_SYSROOT}/usr/lib/swift/linux)
+target_link_libraries(swift-cxx-interop-test PRIVATE SwiftGreeter swiftCore)
 
 install(TARGETS swift-hello swift-cxx-interop-test SwiftGreeter
     RUNTIME DESTINATION bin LIBRARY DESTINATION lib)

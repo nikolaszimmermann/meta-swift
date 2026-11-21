@@ -107,3 +107,35 @@ FILES:${PN}-dev = "\
 # The Swift runtime libraries are unversioned .so files loaded by SONAME.
 INSANE_SKIP:${PN} = "dev-so"
 INSANE_SKIP:${PN}-dev = "dev-elf"
+
+# Only the dynamic stdlib is built, but the static resource directory (clang
+# headers, link arguments) is installed regardless.
+do_install:append() {
+    rm -rf ${D}${libdir}/swift_static
+}
+
+# The C++ interoperability overlays (Cxx, CxxStdlib and their static
+# libraries) and the headers of the generated Swift-to-C++ headers
+# (swiftToCxx) are not part of any install component; install them like the
+# swift.org toolchains ship them.
+do_install:append() {
+    install -d ${D}${libdir}/swift/linux ${D}${libdir}/swift/swiftToCxx
+    cp -R --no-dereference --preserve=mode,links ${B}/lib/swift/linux/Cxx.swiftmodule ${B}/lib/swift/linux/CxxStdlib.swiftmodule ${D}${libdir}/swift/linux/
+    install -m 0644 ${B}/lib/swift/linux/libswiftCxx.a ${B}/lib/swift/linux/libswiftCxxStdlib.a ${D}${libdir}/swift/linux/
+    for f in ${B}/lib/swift/linux/libcxx*; do
+        [ -e "$f" ] && install -m 0644 "$f" ${D}${libdir}/swift/linux/
+    done
+    install -m 0644 ${S}/lib/PrintAsClang/_SwiftCxxInteroperability.h \
+                    ${S}/lib/PrintAsClang/_SwiftStdlibCxxOverlay.h \
+                    ${S}/lib/PrintAsClang/experimental-interoperability-version.json \
+                    ${D}${libdir}/swift/swiftToCxx/
+}
+
+FILES:${PN}-dev += "${libdir}/swift/swiftToCxx"
+
+# Make the Swift runtime libraries visible to the dynamic loader.
+do_install:append() {
+    install -d ${D}${sysconfdir}/ld.so.conf.d
+    echo "${libdir}/swift/linux" > ${D}${sysconfdir}/ld.so.conf.d/swift.conf
+}
+FILES:${PN} += "${sysconfdir}/ld.so.conf.d/swift.conf"

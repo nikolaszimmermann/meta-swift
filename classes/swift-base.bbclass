@@ -26,10 +26,18 @@ SWIFT_DEBUG_PREFIX_MAP = "\
     -file-prefix-map ${STAGING_DIR_NATIVE}= \
 "
 
+# On the target the Swift runtime lives in ${libdir}/swift/linux, which
+# swift-stdlib adds to the dynamic loader's search path. Don't let swiftc embed
+# an rpath into the build sysroot.
 SWIFTFLAGS ?= "\
+    -no-toolchain-stdlib-rpath \
     -sdk ${STAGING_DIR_TARGET} \
     -resource-dir ${SWIFT_RESOURCE_DIR} \
     -use-ld=lld \
     ${@swift_xcc_flags(d)} \
     ${SWIFT_DEBUG_PREFIX_MAP} \
 "
+
+# Libraries built with Swift depend on the Swift runtime, which is not in the
+# default library path: let the linker find it when linking their users.
+TARGET_LDFLAGS:append:class-target = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/linux"

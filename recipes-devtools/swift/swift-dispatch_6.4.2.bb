@@ -21,14 +21,13 @@ EXTRA_OECMAKE = "\
     -DBUILD_SHARED_LIBS=ON \
 "
 
-# Only ship the Swift overlay; the C library and headers come from
+# Only ship the Swift overlay and the module maps in lib/swift/{dispatch,os,
+# Block} it imports; the C library and its usr/include headers come from
 # libdispatch, which this build links against at runtime.
 do_install:append() {
     rm -f ${D}${libdir}/libdispatch.so* ${D}${libdir}/libBlocksRuntime.so*
     rm -f ${D}${libdir}/swift/linux/libdispatch.so* ${D}${libdir}/swift/linux/libBlocksRuntime.so*
-    rm -rf ${D}${includedir}/dispatch ${D}${includedir}/os ${D}${includedir}/Block.h
-    rm -rf ${D}${libdir}/swift/dispatch ${D}${libdir}/swift/os ${D}${libdir}/swift/Block
-    rm -rf ${D}${datadir}/man
+    rm -rf ${D}${includedir} ${D}${datadir}/man
 }
 
 FILES:${PN} = "${libdir}/swift/linux/libswiftDispatch.so"

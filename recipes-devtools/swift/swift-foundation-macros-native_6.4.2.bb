@@ -12,7 +12,7 @@ PV = "${SWIFT_VERSION}"
 SRC_URI = "${SRC_URI_SWIFT_FOUNDATION} ${SRC_URI_SWIFT_SYNTAX}"
 S = "${SWIFT_UNPACKDIR}/swift-foundation-${SWIFT_TAG}"
 
-inherit cmake native
+inherit cmake swift-cmake-tool native
 
 DEPENDS += "swift-native ninja-native"
 
