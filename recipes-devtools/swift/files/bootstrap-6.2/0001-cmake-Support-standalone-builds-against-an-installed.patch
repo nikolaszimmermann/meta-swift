@@ -1,0 +1,120 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Fri, 20 Nov 2026 23:56:06 +0100
+Subject: [PATCH 1/2] cmake: Support standalone builds against an installed
+ LLVM and Clang
+
+A standalone Swift build (SWIFT_PREBUILT_CLANG with LLVM_DIR and Clang_DIR
+pointing at an installed toolchain rather than at an LLVM build tree) fails
+in a few places that assume a build tree:
+
+* The LLVM package of an installed LLVM exports no LLVM_BUILD_LIBRARY_DIR.
+  Its LLVM_LIBRARY_DIR is already the right one, so only translate the
+  former when it is set.
+* GenerateVersionFromVCS.cmake is installed next to LLVMConfig.cmake, prefer
+  that copy over the one in the LLVM source tree.
+* clang's features.json lives in the install tree, make its location
+  configurable through SWIFT_CLANG_FEATURES_FILE.
+* libSwiftScan depends on the clang target, which only exists in unified
+  builds. Only add that dependency when the target exists.
+* With a prebuilt clang, take the clang resource directory from
+  `clang -print-resource-dir` for the compiler build too, not only for
+  runtime-only builds.
+
+This lets distributions build the compiler against their packaged build of
+the swiftlang LLVM fork (e.g. Yocto, where clang-native is its own recipe).
+
+Upstream-Status: Pending
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ cmake/modules/SwiftSharedCMakeConfig.cmake          | 7 ++++++-
+ lib/Basic/CMakeLists.txt                            | 8 +++++++-
+ lib/Option/CMakeLists.txt                           | 4 +++-
+ lib/Tooling/libSwiftScan/CMakeLists.txt             | 5 ++++-
+ stdlib/public/SwiftShims/swift/shims/CMakeLists.txt | 4 ++--
+ 5 files changed, 22 insertions(+), 6 deletions(-)
+
+diff --git a/cmake/modules/SwiftSharedCMakeConfig.cmake b/cmake/modules/SwiftSharedCMakeConfig.cmake
+index 94b674e2..62074ce6 100644
+--- a/cmake/modules/SwiftSharedCMakeConfig.cmake
++++ b/cmake/modules/SwiftSharedCMakeConfig.cmake
+@@ -38,7 +38,12 @@ macro(swift_common_standalone_build_config_llvm product)
+   mark_as_advanced(LLVM_ENABLE_ASSERTIONS)
+ 
+   precondition(LLVM_TOOLS_BINARY_DIR)
+-  precondition_translate_flag(LLVM_BUILD_LIBRARY_DIR LLVM_LIBRARY_DIR)
++  # An installed LLVM (as opposed to a build tree) exports no
++  # LLVM_BUILD_LIBRARY_DIR, its LLVM_LIBRARY_DIR is already correct.
++  if(LLVM_BUILD_LIBRARY_DIR)
++    precondition_translate_flag(LLVM_BUILD_LIBRARY_DIR LLVM_LIBRARY_DIR)
++  endif()
++  precondition(LLVM_LIBRARY_DIR)
+   precondition(LLVM_LIBRARY_DIRS)
+ 
+   # This could be computed using ${CMAKE_CFG_INTDIR} if we want to link Swift
+diff --git a/lib/Basic/CMakeLists.txt b/lib/Basic/CMakeLists.txt
+index 55ac6b12..8549723c 100644
+--- a/lib/Basic/CMakeLists.txt
++++ b/lib/Basic/CMakeLists.txt
+@@ -22,7 +22,13 @@ function(generate_revision_inc revision_inc_var name dir)
+   # Create custom target to generate the VC revision include.
+   set(version_inc "${CMAKE_CURRENT_BINARY_DIR}/${name}Revision.inc")
+ 
+-  set(generate_vcs_version_script "${LLVM_MAIN_SRC_DIR}/cmake/modules/GenerateVersionFromVCS.cmake")
++  # LLVM installs this script next to its CMake package, so prefer that copy
++  # when building against an installed LLVM without its source tree.
++  if(EXISTS "${LLVM_CMAKE_DIR}/GenerateVersionFromVCS.cmake")
++    set(generate_vcs_version_script "${LLVM_CMAKE_DIR}/GenerateVersionFromVCS.cmake")
++  else()
++    set(generate_vcs_version_script "${LLVM_MAIN_SRC_DIR}/cmake/modules/GenerateVersionFromVCS.cmake")
++  endif()
+ 
+   add_custom_command(OUTPUT "${version_inc}"
+     DEPENDS "${${name}_vc}" "${generate_vcs_version_script}"
+diff --git a/lib/Option/CMakeLists.txt b/lib/Option/CMakeLists.txt
+index 8659377a..46f27e1e 100644
+--- a/lib/Option/CMakeLists.txt
++++ b/lib/Option/CMakeLists.txt
+@@ -8,7 +8,9 @@ target_link_libraries(swiftOption PRIVATE
+ 
+ set(features_merger "${SWIFT_SOURCE_DIR}/utils/merge-features.py")
+ set(features_file_swift_src "${CMAKE_CURRENT_SOURCE_DIR}/features.json")
+-set(features_file_clang_src "${LLVM_BINARY_DIR}/share/clang/features.json")
++set(SWIFT_CLANG_FEATURES_FILE "${LLVM_BINARY_DIR}/share/clang/features.json" CACHE FILEPATH
++  "Path to clang's features.json (from an installed clang when building standalone)")
++set(features_file_clang_src "${SWIFT_CLANG_FEATURES_FILE}")
+ set(features_file_dest "${CMAKE_BINARY_DIR}/share/swift/features.json")
+ 
+ add_custom_command(
+diff --git a/lib/Tooling/libSwiftScan/CMakeLists.txt b/lib/Tooling/libSwiftScan/CMakeLists.txt
+index cd68ea87..d6997712 100644
+--- a/lib/Tooling/libSwiftScan/CMakeLists.txt
++++ b/lib/Tooling/libSwiftScan/CMakeLists.txt
+@@ -17,8 +17,11 @@ if(SWIFT_HOST_VARIANT_SDK IN_LIST SWIFT_DARWIN_PLATFORMS)
+ endif()
+ 
+ add_dependencies(libSwiftScan
+-  clang
+   swiftDependencyScan)
++# There is no clang target to wait for when building against a prebuilt clang.
++if(TARGET clang)
++  add_dependencies(libSwiftScan clang)
++endif()
+ 
+ target_link_libraries(libSwiftScan PRIVATE
+     swiftDependencyScan
+diff --git a/stdlib/public/SwiftShims/swift/shims/CMakeLists.txt b/stdlib/public/SwiftShims/swift/shims/CMakeLists.txt
+index f3263df8..c601c497 100644
+--- a/stdlib/public/SwiftShims/swift/shims/CMakeLists.txt
++++ b/stdlib/public/SwiftShims/swift/shims/CMakeLists.txt
+@@ -107,8 +107,8 @@ if (NOT CLANG_VERSION_MAJOR)
+ endif()
+ 
+ # Symlink in the Clang headers from either the provided clang...
+-if(NOT SWIFT_INCLUDE_TOOLS AND
+-   (SWIFT_BUILD_RUNTIME_WITH_HOST_COMPILER OR SWIFT_PREBUILT_CLANG))
++if(SWIFT_PREBUILT_CLANG OR
++   (NOT SWIFT_INCLUDE_TOOLS AND SWIFT_BUILD_RUNTIME_WITH_HOST_COMPILER))
+   if(SWIFT_COMPILER_IS_MSVC_LIKE)
+     execute_process(COMMAND ${CMAKE_C_COMPILER} /clang:-print-resource-dir
+       OUTPUT_VARIABLE clang_headers_location

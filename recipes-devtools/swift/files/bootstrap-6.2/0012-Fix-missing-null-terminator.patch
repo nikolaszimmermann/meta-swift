@@ -1,0 +1,29 @@
+From cfbe70db5d1e65bed2388f97ee52f65719c812b3 Mon Sep 17 00:00:00 2001
+From: Alfonso Urdaneta <alfonso@red82.com>
+Date: Wed, 5 Nov 2025 23:35:20 +0000
+Subject: [PATCH] Fix missing null terminator in runtime path resolution on
+ Linux
+
+
+Upstream-Status: Backport [https://github.com/swiftlang/swift/commit/cfbe70db5d1e65bed2388f97ee52f65719c812b3]
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ stdlib/public/runtime/Paths.cpp | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/stdlib/public/runtime/Paths.cpp b/stdlib/public/runtime/Paths.cpp
+index c247043521f2d..3958098256b79 100644
+--- a/stdlib/public/runtime/Paths.cpp
++++ b/stdlib/public/runtime/Paths.cpp
+@@ -548,8 +548,9 @@ _swift_initRuntimePath(void *) {
+     // this is needed with Musl when statically linking because in that case
+     // dladdr() does nothing.
+     char pathBuf[4096];
+-    ssize_t len = readlink("/proc/self/exe", pathBuf, sizeof(pathBuf));
+-    if (len > 0 && len < sizeof(pathBuf)) {
++    ssize_t len = readlink("/proc/self/exe", pathBuf, sizeof(pathBuf)-1);
++    if (len > 0 ) {
++      pathBuf[len] = '\0';
+       runtimePath = ::strdup(pathBuf);
+       return;
+     }

@@ -1,0 +1,70 @@
+From a5c727125e952839c373fe47e9f9e359db3d4d38 Mon Sep 17 00:00:00 2001
+From: Daniil Kovalev <daniil@kovalev.website>
+Date: Fri, 9 May 2025 00:43:29 +0000
+Subject: [PATCH] Fix compilation errors appearing due to missing `<cstdint>`
+ include (#81233)
+
+This patch resolves the issue by adding missing `<cstdint>` includes.
+For SmallVector.h, such a change was already introduced in LLVM repository:
+https://github.com/llvm/llvm-project/commit/7e44305041d96b064c197216b931ae3917a34ac1
+
+<!--
+If this pull request is targeting a release branch, please fill out the
+following form:
+
+https://github.com/swiftlang/.github/blob/main/PULL_REQUEST_TEMPLATE/release.md?plain=1
+
+Otherwise, replace this comment with a description of your changes and
+rationale. Provide links to external references/discussions if
+appropriate.
+If this pull request resolves any GitHub issues, link them like so:
+
+  Resolves <link to issue>, resolves <link to another issue>.
+
+For more information about linking a pull request to an issue, see:
+
+https://docs.github.com/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue
+-->
+
+<!--
+Before merging this pull request, you must run the Swift continuous
+integration tests.
+For information about triggering CI builds via @swift-ci, see:
+
+https://github.com/apple/swift/blob/main/docs/ContinuousIntegration.md#swift-ci
+
+Thank you for your contribution to Swift!
+-->
+
+Upstream-Status: Backport [https://github.com/swiftlang/swift/commit/a5c727125e952839c373fe47e9f9e359db3d4d38]
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ include/swift/AST/FunctionRefInfo.h   | 2 ++
+ stdlib/include/llvm/ADT/SmallVector.h | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/include/swift/AST/FunctionRefInfo.h b/include/swift/AST/FunctionRefInfo.h
+index a298f08e8c274..254179529d930 100644
+--- a/include/swift/AST/FunctionRefInfo.h
++++ b/include/swift/AST/FunctionRefInfo.h
+@@ -21,6 +21,8 @@
+ #include "swift/Basic/Debug.h"
+ #include "swift/Basic/LLVM.h"
+ 
++#include <cstdint>
++
+ namespace swift {
+ 
+ class DeclNameLoc;
+diff --git a/stdlib/include/llvm/ADT/SmallVector.h b/stdlib/include/llvm/ADT/SmallVector.h
+index 56b9e6063025a..ca651fc8845a6 100644
+--- a/stdlib/include/llvm/ADT/SmallVector.h
++++ b/stdlib/include/llvm/ADT/SmallVector.h
+@@ -21,6 +21,7 @@
+ #include <algorithm>
+ #include <cassert>
+ #include <cstddef>
++#include <cstdint>
+ #include <cstdlib>
+ #include <cstring>
+ #include <functional>

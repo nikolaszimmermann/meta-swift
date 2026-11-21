@@ -1,13 +1,8 @@
 # The Swift compiler, built standalone against the clang/LLVM of this build
 # (the swiftlang fork, see conf/distro/include/swift-toolchain.inc).
 #
-# Swift's compiler is partly written in Swift, so it bootstraps itself in
-# three stages, like upstream's bootstrap_stage{0,1,2} presets
-# (utils/build-presets.ini) and the nixpkgs Swift packaging:
-#   swift-stage0-native  C++ only (SWIFT_ENABLE_SWIFT_IN_SWIFT=OFF)
-#   swift-stage1-native  built by stage0, with swift-syntax (macros)
-#   swift-native         built by stage1, the compiler everything uses
-# No prebuilt Swift is involved at any point.
+# Swift's compiler is partly written in Swift and has to be bootstrapped,
+# see swift-bootstrap.inc. No prebuilt Swift is involved at any point.
 
 SUMMARY = "Swift programming language compiler"
 HOMEPAGE = "https://www.swift.org"
@@ -38,6 +33,10 @@ DEPENDS += "clang-native ninja-native libxml2-native util-linux-native zlib-nati
 # Where this stage installs. Bootstrap stages stay out of the regular prefix.
 SWIFT_STAGE_PREFIX ?= "${prefix}"
 
+# The LLVM/clang this compiler is built against and embeds. By default the
+# clang-native of this build (the swiftlang fork of SWIFT_VERSION).
+SWIFT_LLVM_PREFIX ?= "${STAGING_DIR_NATIVE}${prefix}"
+
 # cmark is a build-time only dependency of the compiler (doc comments).
 SWIFT_CMARK_BUILDDIR = "${WORKDIR}/build-cmark"
 
@@ -59,12 +58,12 @@ SWIFT_INSTALL_COMPONENTS ?= "autolink-driver;compiler;clang-resource-dir-symlink
 EXTRA_OECMAKE = "\
     -DCMAKE_INSTALL_PREFIX=${SWIFT_STAGE_PREFIX} \
     -DCMAKE_LINKER_TYPE=LLD \
-    -DLLVM_DIR=${STAGING_LIBDIR_NATIVE}/cmake/llvm \
-    -DClang_DIR=${STAGING_LIBDIR_NATIVE}/cmake/clang \
+    -DLLVM_DIR=${SWIFT_LLVM_PREFIX}/lib/cmake/llvm \
+    -DClang_DIR=${SWIFT_LLVM_PREFIX}/lib/cmake/clang \
     -DSWIFT_PREBUILT_CLANG=ON \
-    -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
-    -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
-    -DSWIFT_CLANG_FEATURES_FILE=${STAGING_DATADIR_NATIVE}/clang/features.json \
+    -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
+    -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
+    -DSWIFT_CLANG_FEATURES_FILE=${SWIFT_LLVM_PREFIX}/share/clang/features.json \
     -DSWIFT_PATH_TO_CMARK_SOURCE=${SWIFT_CMARK_SRCDIR} \
     -DSWIFT_PATH_TO_CMARK_BUILD=${SWIFT_CMARK_BUILDDIR} \
     -DSWIFT_PATH_TO_LIBDISPATCH_SOURCE=${SWIFT_LIBDISPATCH_SRCDIR} \

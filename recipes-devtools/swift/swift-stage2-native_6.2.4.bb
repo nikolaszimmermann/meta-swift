@@ -1,20 +1,18 @@
-SUMMARY = "Swift compiler, bootstrap stage 1"
-DESCRIPTION = "Swift compiler built by swift-stage0-native, with swift-syntax and \
-macro support. It exists to build swift-native and is never packaged or shipped."
+SUMMARY = "Swift compiler, bootstrap stage 2 (Swift 6.2, full)"
+DESCRIPTION = "Full Swift 6.2 compiler built by swift-stage1-native. It builds \
+the first Swift 6.4 (swift-stage3-native) and is never packaged."
 
 require swift-compiler.inc
+require swift-bootstrap.inc
 
-inherit native
-
-DEPENDS += "swift-stage0-native"
+DEPENDS += "swift-stage1-native"
 
 SRC_URI += "${SRC_URI_SWIFT_IN_SWIFT}"
 
-SWIFT_STAGE_PREFIX = "${libexecdir}/swift-stage1"
+SWIFT_STAGE_PREFIX = "${libexecdir}/swift-stage2"
 
-# Mirrors upstream's bootstrap_stage1 preset.
 EXTRA_OECMAKE += "\
-    -DCMAKE_Swift_COMPILER=${STAGING_DIR_NATIVE}${libexecdir}/swift-stage0/bin/swiftc \
+    -DCMAKE_Swift_COMPILER=${STAGING_DIR_NATIVE}${libexecdir}/swift-stage1/bin/swiftc \
     -DSWIFT_ENABLE_SWIFT_IN_SWIFT=ON \
     -DSWIFT_BUILD_SWIFT_SYNTAX=ON \
     -DSWIFT_PATH_TO_SWIFT_SYNTAX_SOURCE=${SWIFT_SYNTAX_SRCDIR} \
@@ -23,6 +21,7 @@ EXTRA_OECMAKE += "\
     -DSWIFT_ENABLE_EXPERIMENTAL_OBSERVATION=ON \
     -DSWIFT_ENABLE_SYNCHRONIZATION=ON \
     -DSWIFT_ENABLE_BACKTRACING=ON \
+    -DSWIFT_ENABLE_EXPERIMENTAL_DISTRIBUTED=ON \
 "
 
 SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;stdlib;sdk-overlay;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib"
