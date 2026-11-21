@@ -39,7 +39,8 @@ SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;
 # -resource-dir point there instead of next to swift-native). CMake's own Swift compiler
 # check needs the runtime for the build host, so it is skipped. The installed
 # LLVM headers live in the system include directory of the SDK sysroot,
-# which must not become a -I for Swift (0004).
+# which must not become a -I for Swift (0004). SDK host executables are
+# linked by ld.bfd, which keeps them relocatable (see swift-base.bbclass).
 SRC_URI:append:class-nativesdk = "\
     file://0004-cmake-Do-not-add-system-include-directories-of-an-in.patch \
     file://0005-SwiftCompilerSources-Use-SwiftShims-from-SWIFT_PATH_.patch \
@@ -48,6 +49,7 @@ SWIFT_INSTALL_COMPONENTS:class-nativesdk = "autolink-driver;compiler;toolchain-t
 DEPENDS:append:class-nativesdk = " swift-native nativesdk-swift-stdlib nativesdk-clang nativesdk-libdispatch nativesdk-libxml2 nativesdk-zlib nativesdk-ncurses nativesdk-libedit nativesdk-util-linux"
 SWIFT_LLVM_PREFIX:class-nativesdk = "${STAGING_DIR_HOST}${prefix}"
 EXTRA_OECMAKE:remove:class-nativesdk = "\
+    -DCMAKE_LINKER_TYPE=LLD \
     -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
     -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
 "
@@ -62,6 +64,8 @@ EXTRA_OECMAKE:append:class-nativesdk = "\
     -DCMAKE_Swift_COMPILER_WORKS=ON \
     -DCMAKE_Swift_FLAGS='-sdk ${STAGING_DIR_HOST} -resource-dir ${STAGING_LIBDIR}/swift' \
     -DSWIFT_BUILD_STDLIB=OFF \
+    -DCMAKE_LINKER_TYPE=BFD \
+    -DSWIFT_USE_LINKER=bfd \
     -DSWIFT_PATH_TO_SWIFT_SDK=${STAGING_DIR_HOST} \
     -DSWIFT_COMPILER_SOURCES_SDK_FLAGS='-sdk;${STAGING_DIR_HOST};-resource-dir;${STAGING_LIBDIR}/swift' \
     -DSWIFT_BUILD_SDK_OVERLAY=OFF \
