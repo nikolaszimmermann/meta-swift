@@ -3,7 +3,8 @@ require llvm-integration/common/swift-llvm-source.inc
 # The meta-clang (LLVM 20) OE patch series, rebased onto the swiftlang LLVM
 # fork. Two patches are dropped: 0029 (MIPS O32 stat sizes, no Swift target)
 # and 0036 (ppc64 musl build fix, already part of the fork). The order below
-# is the order the series was rebased in.
+# is the order the series was rebased in. Patches from 0101 on belong to this
+# layer.
 FILESEXTRAPATHS:prepend:swiftllvm := "${THISDIR}/files-scarthgap:"
 
 SRC_URI:swiftllvm = "\
@@ -43,5 +44,6 @@ SRC_URI:swiftllvm = "\
     file://0024-Fix-lib-paths-for-OpenEmbedded-Host.patch \
     file://0005-llvm-allow-env-override-of-exe-and-libdir-path.patch \
     file://0100-lldb-Only-install-the-copied-clang-resource-director.patch \
+    file://0101-clang-Prefer-sysroot-usr-for-GCC-in-usrmerge-sysroots.patch \
 "
 SRC_URI[swiftllvm.sha256sum] = "${SWIFT_LLVM_SHA256}"
