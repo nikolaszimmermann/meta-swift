@@ -1,0 +1,70 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Sun, 22 Nov 2026 14:53:09 +0100
+Subject: [PATCH] ClangImporter: Do not track files injected into the Clang VFS
+
+On Linux the compiler injects a module map for libstdc++ (and glibc)
+into the Clang VFS. Clang reports these files as dependencies, and with
+-track-system-dependencies the module interface builder then fails to
+open them on disk when it rebuilds a module such as Cxx from its
+interface:
+
+  error: cannot open file '.../include/c++/13.4.0/module.modulemap'
+
+Exclude the injected files from the dependency collector. Their contents
+come from the resource directory, whose files are never serialized as
+dependencies. Clang may report them with ../ components, so compare
+against the normalized path too.
+
+Upstream-Status: Pending
+---
+ lib/ClangImporter/ClangImporter.cpp | 25 ++++++++++++++++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/lib/ClangImporter/ClangImporter.cpp b/lib/ClangImporter/ClangImporter.cpp
+index 2815b8b..e51afa3 100644
+--- a/lib/ClangImporter/ClangImporter.cpp
++++ b/lib/ClangImporter/ClangImporter.cpp
+@@ -404,11 +404,21 @@ public:
+     // file dependencies, but possibly revisit?
+     if (IsClangModuleFile
+         || isClangImporterSpecialName(Filename)
+-        || ExcludedPaths.count(Filename))
++        || isExcludedPath(Filename))
+       return false;
+     return true;
+   }
+ 
++  bool isExcludedPath(StringRef Filename) const {
++    if (ExcludedPaths.count(Filename))
++      return true;
++    // Clang reports files by the path they were looked up with, which may
++    // contain ../ components. Paths in the VFS overlay have none.
++    SmallString<256> Normalized(Filename);
++    llvm::sys::path::remove_dots(Normalized, /*remove_dot_dot=*/true);
++    return ExcludedPaths.count(Normalized);
++  }
++
+   void maybeAddDependency(StringRef Filename, bool FromModule, bool IsSystem,
+                           bool IsModuleFile, bool IsDirectModuleImport,
+                           bool IsMissing) override {
+@@ -1487,6 +1497,19 @@ std::unique_ptr<ClangImporter> ClangImporter::create(
+     importer->clangFileMapping = getClangInvocationFileMapping(
+         ctx, ctx.SourceMgr.getFileSystem(), ignoreFileMapping);
+ 
++  // Files injected into the Clang VFS, such as the libstdc++ module map, do
++  // not exist on disk and the compiler cannot open them to compute
++  // dependency hashes. Their contents come from the resource directory, which
++  // is not tracked either.
++  if (tracker) {
++    auto &coll = static_cast<ClangImporterDependencyCollector &>(
++        *tracker->getClangCollector());
++    for (const auto &mapping : importer->clangFileMapping.redirectedFiles)
++      coll.excludePath(mapping.first);
++    for (const auto &file : importer->clangFileMapping.overridenFiles)
++      coll.excludePath(file->getBufferIdentifier());
++  }
++
+   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> vfs =
+       computeClangImporterFileSystem(ctx, importer->clangFileMapping,
+                                      ctx.SourceMgr.getFileSystem(),

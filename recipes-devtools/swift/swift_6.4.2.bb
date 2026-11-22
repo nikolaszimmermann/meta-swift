@@ -5,7 +5,10 @@ also provides clang, lld and compiler-rt in this build."
 
 require swift-compiler.inc
 
-SRC_URI += "${SRC_URI_SWIFT_IN_SWIFT}"
+SRC_URI += "\
+    ${SRC_URI_SWIFT_IN_SWIFT} \
+    file://0006-ClangImporter-Do-not-track-files-injected-into-the-C.patch \
+"
 
 DEPENDS:append:class-native = " swift-stage3-native"
 
