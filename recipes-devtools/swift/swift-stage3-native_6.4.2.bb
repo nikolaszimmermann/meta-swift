@@ -12,8 +12,9 @@ SRC_URI += "${SRC_URI_SWIFT_IN_SWIFT}"
 
 SWIFT_STAGE_PREFIX = "${libexecdir}/swift-stage3"
 
+SWIFT_BUILD_COMPILER_DIR = "${STAGING_DIR_NATIVE}${libexecdir_native}/swift-stage2"
 EXTRA_OECMAKE += "\
-    -DCMAKE_Swift_COMPILER=${STAGING_DIR_NATIVE}${libexecdir_native}/swift-stage2/bin/swiftc \
+    -DCMAKE_Swift_COMPILER=${SWIFT_BUILD_COMPILER_DIR}/bin/swiftc \
     -DSWIFT_ENABLE_SWIFT_IN_SWIFT=ON \
     -DSWIFT_BUILD_SWIFT_SYNTAX=ON \
     -DSWIFT_PATH_TO_SWIFT_SYNTAX_SOURCE=${SWIFT_SYNTAX_SRCDIR} \

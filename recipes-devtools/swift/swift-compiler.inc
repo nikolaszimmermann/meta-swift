@@ -31,6 +31,19 @@ inherit cmake python3native
 
 DEPENDS += "clang-native ninja-native libxml2-native util-linux-native zlib-native ncurses-native libedit-native libdispatch-native"
 
+# The bootstrap stage that builds this compiler, if any.
+SWIFT_BUILD_COMPILER_DIR ?= ""
+
+# ld finds the dependencies of shared libraries through -rpath-link before
+# the build host's ld.so.conf, which may list another Swift runtime (a Swift
+# toolchain installed on the host). Point it at the runtime of the building
+# compiler.
+# Swift's build links its Swift tools with CMAKE_Swift_FLAGS only, so pass it
+# there too, with the stage's own Swift flags (SWIFT_STAGE_SWIFTFLAGS).
+SWIFT_STAGE_SWIFTFLAGS ?= ""
+LDFLAGS:append:class-native = "${@' -Wl,-rpath-link,%s/lib/swift/linux' % d.getVar('SWIFT_BUILD_COMPILER_DIR') if d.getVar('SWIFT_BUILD_COMPILER_DIR') else ''}"
+EXTRA_OECMAKE:append:class-native = "${@" -DCMAKE_Swift_FLAGS='%s -Xlinker -rpath-link -Xlinker %s/lib/swift/linux'" % (d.getVar('SWIFT_STAGE_SWIFTFLAGS'), d.getVar('SWIFT_BUILD_COMPILER_DIR')) if d.getVar('SWIFT_BUILD_COMPILER_DIR') else ''}"
+
 # Where this stage installs. Bootstrap stages stay out of the regular prefix.
 SWIFT_STAGE_PREFIX ?= "${prefix}"
 
