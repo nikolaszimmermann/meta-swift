@@ -16,3 +16,6 @@ OVERRIDES .= ":swiftllvm"
 
 # Ship the (now swiftlang) clang in the SDK, next to swiftc.
 CLANGSDK = "1"
+
+# Make the SDK target sysroot work with Swift's C++ interoperability.
+INHERIT += "swift-sdk"
