@@ -3,3 +3,4 @@ inherit swift-base
 
 DEPENDS:append:class-target = " swift-stdlib libdispatch"
 DEPENDS:append:class-nativesdk = " nativesdk-swift-stdlib nativesdk-libdispatch"
+DEPENDS:append:class-native = " libdispatch-native"

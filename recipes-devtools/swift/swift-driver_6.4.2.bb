@@ -22,6 +22,7 @@ SRC_URI = "\
     file://swift-driver-install-rpath.patch \
     file://swift-driver-exclude-vendored-from-install.patch \
     file://swift-driver-do-not-install-internal-libraries.patch \
+    file://swift-driver-valid-module-names.patch \
 "
 SRC_URI[driver.sha256sum] = "7511962f6f0aad7a288f1a3130e8edb5d98ff905545897d71edfe0d287aabf93"
 SRC_URI[llbuild.sha256sum] = "74350fec385b7b88a2f225fc7029752afc2b32f3f7953481dc8aa16299afa128"
@@ -55,10 +56,10 @@ do_install:append() {
     rmdir --ignore-fail-on-non-empty ${D}${libdir}/swift
 }
 
-# Only the SDK host needs it (see DESCRIPTION).
-BBCLASSEXTEND = "nativesdk"
+# Only the build and SDK hosts need it (see DESCRIPTION).
+BBCLASSEXTEND = "native nativesdk"
 
 python () {
-    if not bb.data.inherits_class('nativesdk', d):
-        raise bb.parse.SkipRecipe('swift-driver is only built for the SDK host')
+    if not (bb.data.inherits_class('native', d) or bb.data.inherits_class('nativesdk', d)):
+        raise bb.parse.SkipRecipe('swift-driver is only built for the build and SDK hosts')
 }

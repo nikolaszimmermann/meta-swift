@@ -13,12 +13,14 @@ TOOLCHAIN = "clang"
 
 DEPENDS:append:class-target = " swift-native"
 DEPENDS:append:class-nativesdk = " swift-native"
+DEPENDS:append:class-native = " swift-native"
 
 SWIFTC = "${STAGING_BINDIR_NATIVE}/swiftc"
 
 # The Swift runtime, its modules and the matching clang resource headers live
 # in the target sysroot (installed by swift-stdlib), not next to swiftc.
 SWIFT_RESOURCE_DIR = "${STAGING_DIR_HOST}${libdir}/swift"
+SWIFT_RESOURCE_DIR:class-native = "${STAGING_LIBDIR_NATIVE}/swift"
 
 SWIFT_DEBUG_PREFIX_MAP = "\
     -file-prefix-map ${S}=${TARGET_DBGSRC_DIR} \
@@ -49,6 +51,15 @@ def swift_sdk_dynamic_linker_flags(d):
     # LDFLAGS may already be in swiftc form (swift-cmake-tool.bbclass).
     m = re.search(r'(?:-Wl,|-Xlinker\s+)-{1,2}dynamic-linker(?:[,=]|\s+-Xlinker\s+)(\S+)', d.getVar('LDFLAGS') or '')
     return '-Xlinker -dynamic-linker -Xlinker %s' % m.group(1) if m else ''
+# Native tools run from the build sysroot, so they keep swiftc's rpath to the
+# runtime there (OE makes it relative when staging) and need no -sdk.
+SWIFTFLAGS:class-native = "\
+    -resource-dir ${SWIFT_RESOURCE_DIR} \
+    -use-ld=lld \
+    ${@swift_xcc_flags(d)} \
+    ${SWIFT_DEBUG_PREFIX_MAP} \
+"
+
 SWIFTFLAGS:remove:class-nativesdk = "-use-ld=lld"
 SWIFTFLAGS:append:class-nativesdk = " -use-ld=bfd ${@swift_sdk_dynamic_linker_flags(d)}"
 
@@ -56,6 +67,7 @@ SWIFTFLAGS:append:class-nativesdk = " -use-ld=bfd ${@swift_sdk_dynamic_linker_fl
 # default library path: let the linker find it when linking their users.
 TARGET_LDFLAGS:append:class-target = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/linux"
 LDFLAGS:append:class-nativesdk = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/linux"
+LDFLAGS:append:class-native = " -Wl,-rpath-link,${STAGING_LIBDIR_NATIVE}/swift/linux"
 
 # Like clang.bbclass, link with the usrmerge dynamic loader path on the target.
 SWIFT_DYLD_PREFIX_FLAGS = ""

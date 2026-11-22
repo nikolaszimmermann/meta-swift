@@ -44,5 +44,5 @@ FILES:${PN}-dev = "\
 "
 INSANE_SKIP:${PN} = "dev-so"
 
-# The SDK host needs them to run swift-driver.
-BBCLASSEXTEND = "nativesdk"
+# The build and SDK hosts need them to run swift-driver.
+BBCLASSEXTEND = "native nativesdk"

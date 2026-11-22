@@ -37,3 +37,13 @@ cmake_do_generate_toolchain_file:append:class-target() {
 cmake_do_generate_toolchain_file:append:class-nativesdk() {
     swift_extend_toolchain_file
 }
+
+cmake_do_generate_toolchain_file:append:class-native() {
+    swift_extend_toolchain_file
+}
+
+# Without swift-driver next to it, swiftc falls back to the deprecated C++
+# driver, which behaves differently (for example where it writes dependency
+# files). Native Swift recipes build swift-driver-native itself.
+DEPENDS:append:class-target = " swift-driver-native"
+DEPENDS:append:class-nativesdk = " swift-driver-native"
