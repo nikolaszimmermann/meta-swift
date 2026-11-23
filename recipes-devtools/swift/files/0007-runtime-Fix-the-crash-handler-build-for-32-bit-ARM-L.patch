@@ -1,0 +1,34 @@
+From a48a4a402133f8073a2d5046917ba45e2087c5ba Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Mon, 23 Nov 2026 10:30:48 +0100
+Subject: [PATCH] [runtime] Fix the crash handler build for 32-bit ARM Linux
+
+On 32-bit ARM Linux, mcontext_t is struct sigcontext in glibc and musl,
+the same as on Android. It has no gprs member, and the program counter is
+arm_pc. Use arm_pc there too.
+
+Upstream-Status: Pending
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ stdlib/public/runtime/CrashHandlerLinux.cpp | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/stdlib/public/runtime/CrashHandlerLinux.cpp b/stdlib/public/runtime/CrashHandlerLinux.cpp
+index 85ba02f..3f80dde 100644
+--- a/stdlib/public/runtime/CrashHandlerLinux.cpp
++++ b/stdlib/public/runtime/CrashHandlerLinux.cpp
+@@ -275,11 +275,7 @@ handle_fatal_signal(int signum,
+ #elif defined(__arm64__) || defined(__aarch64__)
+   pc = (void *)(ctx->uc_mcontext.pc);
+ #elif defined(__arm__)
+-#if defined(__ANDROID__)
+   pc = (void *)(ctx->uc_mcontext.arm_pc);
+-#else
+-  pc = (void *)(ctx->uc_mcontext.gprs[15]);
+-#endif
+ #endif
+ 
+   // Fill in crash info
+-- 
+2.53.0
+

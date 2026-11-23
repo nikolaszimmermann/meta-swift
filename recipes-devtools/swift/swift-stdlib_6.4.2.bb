@@ -19,6 +19,7 @@ SRC_URI = "\
     ${SRC_URI_SWIFT_LIBDISPATCH} \
     file://0001-cmake-Support-standalone-builds-against-an-installed.patch \
     file://0002-SwiftConfigureSDK-Allow-overriding-the-Linux-target-.patch \
+    file://0007-runtime-Fix-the-crash-handler-build-for-32-bit-ARM-L.patch \
 "
 S = "${SWIFT_SRCDIR}"
 
