@@ -1,0 +1,36 @@
+name: lint
+
+# oelint-adv on the recipes, appends and classes. Cheap, so it runs on
+# GitHub-hosted runners. Report-only for now: findings show up as annotations
+# on the pull request or commit, but do not fail the job until the existing
+# ones are fixed or suppressed.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  oelint-adv:
+    runs-on: ubuntu-24.04
+    env:
+      # Pinned so that CI and local runs agree: a different version changes
+      # which rules fire.
+      OELINT_ADV_VERSION: "9.6.1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install oelint-adv
+        run: pipx install "oelint-adv==$OELINT_ADV_VERSION"
+
+      - name: Run oelint-adv
+        run: |
+          find . -path ./.git -prune -o -type f \
+            \( -name '*.bb' -o -name '*.bbappend' -o -name '*.bbclass' \) -print0 |
+            sort -z | xargs -0 oelint-adv --quiet --hide info --relpaths \
+              --release scarthgap --exit-zero \
+              --messageformat '::{severity} file={path},line={line},title={id}::{msg}'
