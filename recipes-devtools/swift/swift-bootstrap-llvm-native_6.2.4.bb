@@ -15,7 +15,7 @@ SRC_URI[sha256sum] = "8e02cf861773b8b5b829b208ba892f240a8c3c6d336190c5eca32e393b
 S = "${@d.getVar('UNPACKDIR') or d.getVar('WORKDIR')}/llvm-project-${SWIFT_BOOTSTRAP_TAG}"
 OECMAKE_SOURCEPATH = "${S}/llvm"
 
-inherit cmake native python3native
+inherit cmake python3native native
 
 DEPENDS += "ninja-native zlib-native"
 
