@@ -15,19 +15,21 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/swift-driver:"
 # argument-parser, llbuild and tools-support-core are only used by the driver
 # and are linked into it statically, like the container SDK does.
 SRC_URI = "\
-    ${SWIFT_GH}/swift-driver/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=driver;downloadfilename=swift-driver-${SWIFT_TAG}.tar.gz \
-    ${SWIFT_GH}/swift-llbuild/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=llbuild;downloadfilename=swift-llbuild-${SWIFT_TAG}.tar.gz \
-    ${SWIFT_GH}/swift-tools-support-core/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=tsc;downloadfilename=swift-tools-support-core-${SWIFT_TAG}.tar.gz \
-    https://github.com/apple/swift-argument-parser/archive/refs/tags/1.6.1.tar.gz;name=argumentparser;downloadfilename=swift-argument-parser-1.6.1.tar.gz \
+    ${SWIFT_GIT}/swift-driver.git;${SWIFT_GIT_PARAMS};name=driver;destsuffix=swift-driver-${SWIFT_TAG} \
+    ${SWIFT_GIT}/swift-llbuild.git;${SWIFT_GIT_PARAMS};name=llbuild;destsuffix=swift-llbuild-${SWIFT_TAG} \
+    ${SWIFT_GIT}/swift-tools-support-core.git;${SWIFT_GIT_PARAMS};name=tsc;destsuffix=swift-tools-support-core-${SWIFT_TAG} \
+    git://github.com/apple/swift-argument-parser.git;${SWIFT_GIT_PARAMS};name=argumentparser;destsuffix=swift-argument-parser-1.6.1 \
     file://swift-driver-install-rpath.patch \
     file://swift-driver-exclude-vendored-from-install.patch \
     file://swift-driver-do-not-install-internal-libraries.patch \
     file://swift-driver-valid-module-names.patch \
 "
-SRC_URI[driver.sha256sum] = "7511962f6f0aad7a288f1a3130e8edb5d98ff905545897d71edfe0d287aabf93"
-SRC_URI[llbuild.sha256sum] = "74350fec385b7b88a2f225fc7029752afc2b32f3f7953481dc8aa16299afa128"
-SRC_URI[tsc.sha256sum] = "e4157ca16a5a5b31788c7455a8dddc5b2ed1b747fd523acedba2dd4f735465bf"
-SRC_URI[argumentparser.sha256sum] = "d2fbb15886115bb2d9bfb63d4c1ddd4080cbb4bfef2651335c5d3b9dd5f3c8ba"
+# swift-${SWIFT_TAG} of the swiftlang repositories, swift-argument-parser 1.6.1
+SRCREV_driver = "174567a5681a9a949bcd52f821deb8fa65105434"
+SRCREV_llbuild = "ab6421207b9e4971c94e97c5832a3d8a4cae9092"
+SRCREV_tsc = "d45c8b38d2824498b7863d3d5f0227937a53c177"
+SRCREV_argumentparser = "309a47b2b1d9b5e991f36961c983ecec72275be3"
+SRCREV_FORMAT = "driver"
 
 S = "${SWIFT_UNPACKDIR}/swift-driver-${SWIFT_TAG}"
 

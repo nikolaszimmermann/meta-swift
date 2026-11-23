@@ -48,4 +48,3 @@ SRC_URI:swiftllvm = "\
     file://0102-lldb-Fix-the-VirtualDataExtractor-build-for-32-bit-t.patch \
     file://0103-clang-Find-the-OpenEmbedded-GCC-for-32-bit-hard-floa.patch \
 "
-SRC_URI[swiftllvm.sha256sum] = "${SWIFT_LLVM_SHA256}"

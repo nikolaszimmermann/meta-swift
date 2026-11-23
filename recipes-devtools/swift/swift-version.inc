@@ -1,30 +1,36 @@
-# Sources of one Swift release. The github archive tarballs of all swiftlang
-# repositories unpack to <repo>-${SWIFT_TAG}. Version and LLVM fork pins live
-# in conf/swift-version.conf.
+# Sources of one Swift release, fetched with git at the commits of the release
+# tags. Each checkout goes to <repo>-<tag>, the directory the github archives
+# used to unpack to. Version and LLVM fork pins live in
+# conf/swift-version.conf.
 
-SWIFT_GH = "https://github.com/swiftlang"
+SWIFT_GIT = "git://github.com/swiftlang"
+SWIFT_GIT_PARAMS = "protocol=https;nobranch=1"
 
 SWIFT_SYNTAX_VERSION = "604.0.0"
 
-SRC_URI_SWIFT = "${SWIFT_GH}/swift/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=swift;downloadfilename=swift-${SWIFT_TAG}.tar.gz"
-SRC_URI_SWIFT_CMARK = "${SWIFT_GH}/swift-cmark/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=cmark;downloadfilename=swift-cmark-${SWIFT_TAG}.tar.gz"
-SRC_URI_SWIFT_LIBDISPATCH = "${SWIFT_GH}/swift-corelibs-libdispatch/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=libdispatch;downloadfilename=swift-corelibs-libdispatch-${SWIFT_TAG}.tar.gz"
-SRC_URI_SWIFT_STRING_PROCESSING = "${SWIFT_GH}/swift-experimental-string-processing/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=stringprocessing;downloadfilename=swift-experimental-string-processing-${SWIFT_TAG}.tar.gz"
-SRC_URI_SWIFT_SYNTAX = "${SWIFT_GH}/swift-syntax/archive/refs/tags/${SWIFT_SYNTAX_VERSION}.tar.gz;name=syntax;downloadfilename=swift-syntax-${SWIFT_SYNTAX_VERSION}.tar.gz"
-SRC_URI_SWIFT_CORELIBS_FOUNDATION = "${SWIFT_GH}/swift-corelibs-foundation/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=corelibsfoundation;downloadfilename=swift-corelibs-foundation-${SWIFT_TAG}.tar.gz"
-SRC_URI_SWIFT_FOUNDATION = "${SWIFT_GH}/swift-foundation/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=foundation;downloadfilename=swift-foundation-${SWIFT_TAG}.tar.gz"
-SRC_URI_SWIFT_FOUNDATION_ICU = "${SWIFT_GH}/swift-foundation-icu/archive/refs/tags/${SWIFT_TAG}.tar.gz;name=foundationicu;downloadfilename=swift-foundation-icu-${SWIFT_TAG}.tar.gz"
-SRC_URI_SWIFT_COLLECTIONS = "https://github.com/apple/swift-collections/archive/refs/tags/1.1.6.tar.gz;name=collections;downloadfilename=swift-collections-1.1.6.tar.gz"
+SRC_URI_SWIFT = "${SWIFT_GIT}/swift.git;${SWIFT_GIT_PARAMS};name=swift;destsuffix=swift-${SWIFT_TAG}"
+SRC_URI_SWIFT_CMARK = "${SWIFT_GIT}/swift-cmark.git;${SWIFT_GIT_PARAMS};name=cmark;destsuffix=swift-cmark-${SWIFT_TAG}"
+SRC_URI_SWIFT_LIBDISPATCH = "${SWIFT_GIT}/swift-corelibs-libdispatch.git;${SWIFT_GIT_PARAMS};name=libdispatch;destsuffix=swift-corelibs-libdispatch-${SWIFT_TAG}"
+SRC_URI_SWIFT_STRING_PROCESSING = "${SWIFT_GIT}/swift-experimental-string-processing.git;${SWIFT_GIT_PARAMS};name=stringprocessing;destsuffix=swift-experimental-string-processing-${SWIFT_TAG}"
+SRC_URI_SWIFT_SYNTAX = "${SWIFT_GIT}/swift-syntax.git;${SWIFT_GIT_PARAMS};name=syntax;destsuffix=swift-syntax-${SWIFT_SYNTAX_VERSION}"
+SRC_URI_SWIFT_CORELIBS_FOUNDATION = "${SWIFT_GIT}/swift-corelibs-foundation.git;${SWIFT_GIT_PARAMS};name=corelibsfoundation;destsuffix=swift-corelibs-foundation-${SWIFT_TAG}"
+SRC_URI_SWIFT_FOUNDATION = "${SWIFT_GIT}/swift-foundation.git;${SWIFT_GIT_PARAMS};name=foundation;destsuffix=swift-foundation-${SWIFT_TAG}"
+SRC_URI_SWIFT_FOUNDATION_ICU = "${SWIFT_GIT}/swift-foundation-icu.git;${SWIFT_GIT_PARAMS};name=foundationicu;destsuffix=swift-foundation-icu-${SWIFT_TAG}"
+SRC_URI_SWIFT_COLLECTIONS = "git://github.com/apple/swift-collections.git;${SWIFT_GIT_PARAMS};name=collections;destsuffix=swift-collections-1.1.6"
 
-SRC_URI[swift.sha256sum] = "c9c0c37995aa69994807eeb62c1e7e89bdd9f1a366dd8fc98a4bf65753dc6cbb"
-SRC_URI[cmark.sha256sum] = "e9fb077781f4511103d5e404b7760ee07b688dc95e32f52616883c10ae3e669a"
-SRC_URI[libdispatch.sha256sum] = "133f011259b8d25efedfa4ac1fa99b9ed340cb5010d8b10f9ba2dbf31b02335e"
-SRC_URI[stringprocessing.sha256sum] = "8452bfdeac7f1afb9fe91faeba34f09ad46eb8e3085d345d3839f9ad4b69032b"
-SRC_URI[syntax.sha256sum] = "a2968b85f4fbac228bfbbab7122ea69154d326cbf666e0bce6d8e9050f39a19d"
-SRC_URI[corelibsfoundation.sha256sum] = "68f72893885bb6b1b5c3bd8118e6796889c51210e6fa82c1103eecb9ecc166e0"
-SRC_URI[foundation.sha256sum] = "c258b3a2c1916fa42ea5cf47a7ff16661c0d4e3968eb57c8a4fab87d651d861b"
-SRC_URI[foundationicu.sha256sum] = "6337f0365f6a76b328488f370ffe88fa974e984487b377c4caceb8892a54fdae"
-SRC_URI[collections.sha256sum] = "2f558b33b6eba5b0c263110d7cb1a11b59d63059e845dc1984c65359e36f29da"
+# swift-${SWIFT_VERSION}-RELEASE, swift-syntax 604.0.0, swift-collections 1.1.6
+SRCREV_swift = "83eb12448e4323abbf81b0153dced2faff02d22f"
+SRCREV_cmark = "924936d0427cb25a61169739a7660230bffa6ea6"
+SRCREV_libdispatch = "2017c8a7ed86a201604cec55cd648b725afadab5"
+SRCREV_stringprocessing = "7581e7b803d2ccc58409e45e1bfde40146cb8e41"
+SRCREV_syntax = "050f1a346fbbac0ca2cfb15a95274f7bd1cf0ccf"
+SRCREV_corelibsfoundation = "783c06a9327793da1e353bc69205628ff2520a9a"
+SRCREV_foundation = "e4049b2d77e2d5d70c4cfcc99fd5eca32e1bcb06"
+SRCREV_foundationicu = "f986d0728da0766cf81f371521b909d4a11681d2"
+SRCREV_collections = "c11818f3cae0780656baa430b49e7f163f08dffd"
+
+# Only needed if a recipe's PV ever uses the revisions.
+SRCREV_FORMAT = "swift"
 
 SWIFT_UNPACKDIR = "${@d.getVar('UNPACKDIR') or d.getVar('WORKDIR')}"
 SWIFT_SRCDIR = "${SWIFT_UNPACKDIR}/swift-${SWIFT_TAG}"
