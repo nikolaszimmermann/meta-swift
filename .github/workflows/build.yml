@@ -67,6 +67,12 @@ jobs:
             "https://raw.githubusercontent.com/siemens/kas/$KAS_VERSION/kas-container"
           echo "$KAS_CONTAINER_SHA256  $RUNNER_TEMP/kas-container" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/kas-container"
+
+          # Cancelling a job does not stop its container, whose bitbake then
+          # keeps running on the build directory. Name the container after the
+          # configuration: --replace removes one left over from an earlier
+          # job, and the cancel step below stops it.
+          echo "KAS_RUNTIME_ARGS_CI=--name meta-swift-${{ matrix.config }} --replace" >> "$GITHUB_ENV"
         env:
           META_SWIFT_CI_CACHE: ${{ vars.META_SWIFT_CI_CACHE }}
 
@@ -77,8 +83,8 @@ jobs:
           # retries any fetch that still failed.
           for i in 1 2 3 4 5; do
             echo "Fetch attempt $i of 5"
-            if "$RUNNER_TEMP/kas-container" build "ci/kas/${{ matrix.config }}.yml" \
-                -- --runall=fetch; then
+            if "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
+                build "ci/kas/${{ matrix.config }}.yml" -- --runall=fetch; then
               exit 0
             fi
           done
@@ -87,8 +93,12 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
-          "$RUNNER_TEMP/kas-container" build "ci/kas/${{ matrix.config }}.yml" \
-            2>&1 | tee "$RUNNER_TEMP/build.log"
+          "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
+            build "ci/kas/${{ matrix.config }}.yml" 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Stop the build container
+        if: cancelled()
+        run: podman stop --time 60 "meta-swift-${{ matrix.config }}" || true
 
       - name: Check for non-deterministic task hashes
         if: ${{ !cancelled() }}
