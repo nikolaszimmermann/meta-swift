@@ -9,7 +9,12 @@ require swift-version.inc
 
 PV = "${SWIFT_VERSION}"
 
-SRC_URI = "${SRC_URI_SWIFT_LIBDISPATCH}"
+FILESEXTRAPATHS:prepend := "${THISDIR}/libdispatch:"
+
+SRC_URI = "\
+    ${SRC_URI_SWIFT_LIBDISPATCH} \
+    file://0001-benchmark-Make-the-integer-to-floating-point-convers.patch \
+"
 S = "${SWIFT_LIBDISPATCH_SRCDIR}"
 
 inherit swift-cmake

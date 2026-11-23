@@ -1,0 +1,51 @@
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Subject: [PATCH] benchmark: Make the integer to floating point conversions
+ explicit
+
+Where uint64_t is converted to long double (32-bit targets), clang warns
+with -Wimplicit-int-float-conversion, and the -Werror build of
+libdispatch fails, e.g. for armv7. Cast to the type of the destination,
+which keeps the __uint128_t arithmetic of 64-bit targets unchanged.
+
+Upstream-Status: Pending
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+--- a/src/benchmark.c
++++ b/src/benchmark.c
+@@ -60,14 +60,14 @@
+ 	} while (i < cnt);
+ 	delta = _dispatch_uptime() - start;
+ 
+-	lcost = delta;
++	lcost = (__typeof__(lcost))delta;
+ #if HAVE_MACH_ABSOLUTE_TIME
+ 	lcost *= bdata->tbi.numer;
+ 	lcost /= bdata->tbi.denom;
+ #endif
+ 	lcost /= cnt;
+ 
+-	bdata->loop_cost = lcost > UINT64_MAX ? UINT64_MAX : (uint64_t)lcost;
++	bdata->loop_cost = lcost > (__typeof__(lcost))UINT64_MAX ? UINT64_MAX : (uint64_t)lcost;
+ }
+ 
+ #ifdef __BLOCKS__
+@@ -113,16 +113,16 @@
+ 	} while (i < count);
+ 	delta = _dispatch_uptime() - start;
+ 
+-	conversion = delta;
++	conversion = (__typeof__(conversion))delta;
+ #if HAVE_MACH_ABSOLUTE_TIME
+ 	conversion *= bdata.tbi.numer;
+ 	big_denom = bdata.tbi.denom;
+ #else
+-	big_denom = delta;
++	big_denom = (__typeof__(big_denom))delta;
+ #endif
+ 	big_denom *= count;
+ 	conversion /= big_denom;
+-	ns = conversion > UINT64_MAX ? UINT64_MAX : (uint64_t)conversion;
++	ns = conversion > (__typeof__(conversion))UINT64_MAX ? UINT64_MAX : (uint64_t)conversion;
+ 
+ 	return ns - bdata.loop_cost;
+ }
