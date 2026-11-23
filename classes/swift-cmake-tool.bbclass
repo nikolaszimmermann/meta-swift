@@ -27,6 +27,10 @@ def swift_linker_neutral_ldflags(flags):
             out.append(f)
     return ' '.join(out)
 
+# Rewrite lazily. Storing the expanded value at parse time would freeze values
+# set by event handlers (such as the uninative dynamic linker) into LDFLAGS,
+# and make the task signatures differ between the cooker and the workers.
 python () {
-    d.setVar('LDFLAGS', swift_linker_neutral_ldflags(d.getVar('LDFLAGS')))
+    d.setVar('SWIFT_ORIG_LDFLAGS', d.getVar('LDFLAGS', False))
+    d.setVar('LDFLAGS', '${@swift_linker_neutral_ldflags(d.getVar("SWIFT_ORIG_LDFLAGS"))}')
 }
