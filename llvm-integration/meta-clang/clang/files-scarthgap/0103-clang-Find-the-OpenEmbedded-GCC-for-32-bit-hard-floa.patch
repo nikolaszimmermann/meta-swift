@@ -1,0 +1,50 @@
+From 147b1e0ca97325a56eb22182c68a6534d4c66591 Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Mon, 23 Nov 2026 07:24:41 +0100
+Subject: [PATCH] [clang] Find the OpenEmbedded GCC for 32-bit hard-float ARM
+
+OpenEmbedded installs GCC for 32-bit hard-float ARM under the soft-float
+triple, for example arm-poky-linux-gnueabi, and selects the hard-float ABI
+with -mfloat-abi=hard. Swift needs the ABI in the triple and uses
+armv7-poky-linux-gnueabihf, for which the driver found no GCC installation
+and thus no libstdc++ headers. Also look for the soft-float triple of the
+same vendor when the target triple is hard-float.
+
+Upstream-Status: Inappropriate [OE specific]
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ clang/lib/Driver/ToolChains/Gnu.cpp | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/clang/lib/Driver/ToolChains/Gnu.cpp b/clang/lib/Driver/ToolChains/Gnu.cpp
+index 6a37aba..4d3eeb2 100644
+--- a/clang/lib/Driver/ToolChains/Gnu.cpp
++++ b/clang/lib/Driver/ToolChains/Gnu.cpp
+@@ -2126,6 +2126,24 @@ void Generic_GCC::GCCInstallationDetector::init(
+     }
+   }
+ 
++  // OpenEmbedded installs GCC for 32-bit hard-float ARM under the soft-float
++  // triple (arm-<vendor>-linux-gnueabi) and passes -mfloat-abi=hard instead.
++  // Look there too when the target triple has the hard-float environment.
++  std::string OEARMTriple;
++  if (TargetTriple.getVendor() == llvm::Triple::OpenEmbedded &&
++      (TargetTriple.getArch() == llvm::Triple::arm ||
++       TargetTriple.getArch() == llvm::Triple::thumb)) {
++    if (TargetTriple.getEnvironment() == llvm::Triple::GNUEABIHF)
++      OEARMTriple = "gnueabi";
++    else if (TargetTriple.getEnvironment() == llvm::Triple::MuslEABIHF)
++      OEARMTriple = "musleabi";
++    if (!OEARMTriple.empty()) {
++      OEARMTriple = ("arm-" + TargetTriple.getVendorName() + "-linux-" +
++                     OEARMTriple).str();
++      CandidateTripleAliases.push_back(OEARMTriple);
++    }
++  }
++
+   CollectLibDirsAndTriples(TargetTriple, BiarchVariantTriple, CandidateLibDirs,
+                            CandidateTripleAliases, CandidateBiarchLibDirs,
+                            CandidateBiarchTripleAliases);
+-- 
+2.53.0
+
