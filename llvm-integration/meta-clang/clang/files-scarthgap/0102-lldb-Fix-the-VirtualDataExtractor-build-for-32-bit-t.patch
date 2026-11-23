@@ -1,0 +1,30 @@
+From 2f393abe3d881bd209f93c8820932f46117ee02f Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Mon, 23 Nov 2026 04:34:40 +0100
+Subject: [PATCH] [lldb] Fix the VirtualDataExtractor build for 32-bit targets
+
+LookupTable::Entry::size is 64-bit, but the ArrayRef length is size_t,
+which is 32-bit on 32-bit targets. The narrowing in the initializer list
+is an error there. Cast the size like the start offset.
+
+Upstream-Status: Pending
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ lldb/source/Utility/VirtualDataExtractor.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/lldb/source/Utility/VirtualDataExtractor.cpp b/lldb/source/Utility/VirtualDataExtractor.cpp
+index fd7388c2c..dcfdd1815 100644
+--- a/lldb/source/Utility/VirtualDataExtractor.cpp
++++ b/lldb/source/Utility/VirtualDataExtractor.cpp
+@@ -310,5 +310,6 @@ llvm::ArrayRef<uint8_t> VirtualDataExtractor::GetData() const {
+          "VirtualDataExtractor GetData requires valid virtual address");
+   if (!entry)
+     return {};
+-  return {m_start + static_cast<size_t>(entry->data), entry->size};
++  return {m_start + static_cast<size_t>(entry->data),
++          static_cast<size_t>(entry->size)};
+ }
+-- 
+2.53.0
+

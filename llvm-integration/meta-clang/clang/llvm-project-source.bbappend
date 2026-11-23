@@ -45,5 +45,6 @@ SRC_URI:swiftllvm = "\
     file://0005-llvm-allow-env-override-of-exe-and-libdir-path.patch \
     file://0100-lldb-Only-install-the-copied-clang-resource-director.patch \
     file://0101-clang-Prefer-sysroot-usr-for-GCC-in-usrmerge-sysroots.patch \
+    file://0102-lldb-Fix-the-VirtualDataExtractor-build-for-32-bit-t.patch \
 "
 SRC_URI[swiftllvm.sha256sum] = "${SWIFT_LLVM_SHA256}"
