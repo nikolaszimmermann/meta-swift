@@ -10,6 +10,9 @@ header:
 distro: poky
 target:
   - swift-cxx-interop-test
+  # The SDK, with the Swift compiler for the SDK host (nativesdk-swift).
+  # ci/test-sdk.sh then compiles a program with it.
+  - core-image-minimal:do_populate_sdk
 
 repos:
   # This repository; the layer is at its root.
