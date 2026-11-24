@@ -1,0 +1,10 @@
+# x86_64
+#
+#   kas-container build ci/kas/scarthgap-qemux86-64.yml
+
+header:
+  version: 14
+  includes:
+    - ci/kas/scarthgap.yml
+
+machine: qemux86-64
