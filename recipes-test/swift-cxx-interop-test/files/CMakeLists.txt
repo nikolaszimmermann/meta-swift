@@ -14,8 +14,10 @@ target_compile_options(SwiftGreeter PRIVATE
     "SHELL:-emit-clang-header-path ${CMAKE_CURRENT_BINARY_DIR}/SwiftGreeter-Swift.h")
 set_target_properties(SwiftGreeter PROPERTIES Swift_MODULE_NAME SwiftGreeter)
 
-# A Swift executable.
+# A Swift executable. The module name defaults to the target name, which is
+# not a valid Swift identifier here.
 add_executable(swift-hello hello.swift)
+set_target_properties(swift-hello PROPERTIES Swift_MODULE_NAME SwiftHello)
 
 # A C++ executable calling into Swift through the generated header.
 add_executable(swift-cxx-interop-test main.cpp)
