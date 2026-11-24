@@ -101,6 +101,22 @@ do_install:append:class-native() {
     done
 }
 
+# The driver loads libSwiftScan from lib/swift/host, where upstream installs a
+# symlink to the library in lib/swift/host/compiler. OE rewrites the library's
+# rpath to the shared libLLVM relative to the directory of the file itself,
+# which does not resolve when loaded through the symlink: the driver then warns
+# about an incompatible libSwiftScan and falls back to running swift-frontend
+# for the dependency scan. Install the library in lib/swift/host and the
+# symlink in lib/swift/host/compiler; its upstream rpath works from both.
+do_install:append() {
+    host=${D}${libdir}/swift/host
+    if [ -L $host/lib_InternalSwiftScan.so ]; then
+        rm $host/lib_InternalSwiftScan.so
+        mv $host/compiler/lib_InternalSwiftScan.so $host/
+        ln -s ../lib_InternalSwiftScan.so $host/compiler/lib_InternalSwiftScan.so
+    fi
+}
+
 BBCLASSEXTEND = "native nativesdk"
 
 python () {
