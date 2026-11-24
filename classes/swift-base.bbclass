@@ -27,7 +27,15 @@ SWIFT_DEBUG_PREFIX_MAP = "\
     -file-prefix-map ${B}=${TARGET_DBGSRC_DIR} \
     -file-prefix-map ${STAGING_DIR_HOST}= \
     -file-prefix-map ${STAGING_DIR_NATIVE}= \
+    ${SWIFT_CONCISE_MAGIC_FILE} \
 "
+
+# In the Swift 5 language mode #file is the absolute source path, which
+# -file-prefix-map does not remap: it ends up in the binary wherever #file is
+# used, including as the default argument of fatalError(), precondition() and
+# assert(). Give #file its Swift 6 meaning, "Module/File.swift", like #fileID.
+# Code that needs the full path can still use #filePath.
+SWIFT_CONCISE_MAGIC_FILE = "-enable-upcoming-feature ConciseMagicFile"
 
 # On the target the Swift runtime lives in ${libdir}/swift/linux, which
 # swift-stdlib adds to the dynamic loader's search path. Don't let swiftc embed
