@@ -21,11 +21,12 @@ for env in "$sdk"/environment-setup-*; do
     . "$env"
 done
 
-work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
+# The program stays in the build directory: the swift_sdk runtime test runs
+# it in QEMU (SWIFT_SDK_TEST_PROGRAM in ci/kas/scarthgap.yml).
+program=$sdk/hello
 # SWIFTFLAGS holds several flags, split on purpose.
 # shellcheck disable=SC2086
 "$SWIFTC" -target "$SWIFT_TARGET" $SWIFTFLAGS -O \
-    -o "$work/hello" "$layer/ci/sdk-test/hello.swift"
-$READELF -h "$work/hello" | grep -E 'Class|Machine'
+    -o "$program" "$layer/ci/sdk-test/hello.swift"
+$READELF -h "$program" | grep -E 'Class|Machine'
 echo "SDK test passed: $SWIFT_TARGET"
