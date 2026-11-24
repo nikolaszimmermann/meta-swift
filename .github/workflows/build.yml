@@ -133,6 +133,16 @@ jobs:
           "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
             shell "ci/kas/${{ matrix.config }}.yml" -c /repo/ci/test-sdk.sh
 
+      - name: Test in QEMU
+        run: |
+          # Boots the image and runs the runtime tests set in the kas
+          # configuration, including the program the SDK test compiled.
+          set -o pipefail
+          "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
+            shell "ci/kas/${{ matrix.config }}.yml" \
+            -c "bitbake core-image-minimal -c testimage" 2>&1 |
+            tee -a "$RUNNER_TEMP/build.log"
+
       - name: Stop the build container
         if: cancelled()
         run: podman stop --time 60 "meta-swift-${{ matrix.config }}" || true
@@ -168,6 +178,12 @@ jobs:
             sort -u | while IFS= read -r log; do
             dest="$RUNNER_TEMP/logs/$(echo "$log" | cut -d/ -f3-4 | tr / _)-$(basename "$log")"
             cp "$KAS_BUILD_DIR/$log" "$dest" || true
+          done
+          # The QEMU boot log and the ptest results of the runtime tests.
+          for dir in "$KAS_BUILD_DIR"/tmp/work/*/core-image-minimal/*/testimage; do
+            if [ -d "$dir" ]; then
+              cp -r "$dir" "$RUNNER_TEMP/logs/testimage"
+            fi
           done
 
       - name: Upload failed task logs

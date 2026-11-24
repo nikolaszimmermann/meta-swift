@@ -227,7 +227,7 @@ against it. The badges at the top show their state on `main`.
 
 | Workflow                                         | Runs on                     | Does                                              |
 | ------------------------------------------------ | --------------------------- | ------------------------------------------------- |
-| [build](.github/workflows/build.yml)             | self-hosted, rootless podman | builds `swift-cxx-interop-test` and an SDK for each kas configuration in `ci/kas/`, and compiles a program with the SDK |
+| [build](.github/workflows/build.yml)             | self-hosted, rootless podman | builds `swift-cxx-interop-test`, an image and an SDK for each kas configuration in `ci/kas/`, compiles a program with the SDK and runs the tests in QEMU |
 | [lint](.github/workflows/lint.yml)               | GitHub-hosted               | runs oelint-adv, fails on any finding             |
 
 ### build
@@ -238,14 +238,17 @@ GitHub-hosted runners, so it runs on a self-hosted runner labelled
 `meta-swift`. Each job:
 
 1. fetches all sources first, with retries,
-2. builds `swift-cxx-interop-test` and the SDK of `core-image-minimal`,
+2. builds `swift-cxx-interop-test`, `core-image-minimal` and its SDK,
 3. installs the SDK and compiles
    [a Swift program](ci/sdk-test/hello.swift) with it, using Dispatch and
    Foundation ([`ci/test-sdk.sh`](ci/test-sdk.sh)),
-4. fails when bitbake reports a non-deterministic task hash, since that
+4. boots the image in QEMU with `testimage` and runs the ptest of
+   `swift-cxx-interop-test` and the program from the SDK
+   ([`swift_sdk.py`](lib/oeqa/runtime/cases/swift_sdk.py)) on it,
+5. fails when bitbake reports a non-deterministic task hash, since that
    breaks sstate reuse, even if every task succeeded,
-5. on failure, uploads the logs of failed tasks as the `logs-<config>`
-   artifact of the run, kept for 14 days.
+6. on failure, uploads the logs of failed tasks and the QEMU test logs as
+   the `logs-<config>` artifact of the run, kept for 14 days.
 
 Downloads, sstate and the build directory persist in `~/meta-swift-ci`, or
 in the directory set by the repository variable `META_SWIFT_CI_CACHE`. A

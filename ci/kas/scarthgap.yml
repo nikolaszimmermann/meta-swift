@@ -13,6 +13,8 @@ target:
   # The SDK, with the Swift compiler for the SDK host (nativesdk-swift).
   # ci/test-sdk.sh then compiles a program with it.
   - core-image-minimal:do_populate_sdk
+  # The image the CI boots in QEMU for the runtime tests (testimage).
+  - core-image-minimal
 
 repos:
   # This repository; the layer is at its root.
@@ -53,3 +55,17 @@ local_conf_header:
         HALT,${TMPDIR},100M,1K \
         HALT,${DL_DIR},100M,1K \
         HALT,${SSTATE_DIR},100M,1K"
+  # The runtime tests of the CI: bitbake core-image-minimal -c testimage
+  # boots the image in QEMU, logs in over ssh and runs the ptest of
+  # swift-cxx-interop-test, then the program that ci/test-sdk.sh compiled
+  # with the SDK. slirp networking needs no root rights and no tap devices.
+  # scp in the kas container uses the SFTP protocol, hence openssh with its
+  # sftp-server instead of dropbear.
+  qemu-test: |
+    IMAGE_CLASSES += "testimage"
+    IMAGE_FEATURES:append:pn-core-image-minimal = " ssh-server-openssh allow-empty-password empty-root-password allow-root-login"
+    IMAGE_INSTALL:append:pn-core-image-minimal = " openssh-sftp-server ptest-runner swift-cxx-interop-test-ptest swift-foundation"
+    TEST_SUITES = "ping ssh ptest swift_sdk"
+    TEST_RUNQEMUPARAMS = "slirp nographic"
+    QB_MEM = "-m 1024"
+    SWIFT_SDK_TEST_PROGRAM = "${TOPDIR}/sdk-test/hello"
