@@ -113,6 +113,11 @@ jobs:
           "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
             build "ci/kas/${{ matrix.config }}.yml" 2>&1 | tee "$RUNNER_TEMP/build.log"
 
+      - name: Test the SDK
+        run: |
+          "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
+            shell "ci/kas/${{ matrix.config }}.yml" -c /repo/ci/test-sdk.sh
+
       - name: Stop the build container
         if: cancelled()
         run: podman stop --time 60 "meta-swift-${{ matrix.config }}" || true

@@ -227,7 +227,7 @@ against it. The badges at the top show their state on `main`.
 
 | Workflow                                         | Runs on                     | Does                                              |
 | ------------------------------------------------ | --------------------------- | ------------------------------------------------- |
-| [build](.github/workflows/build.yml)             | self-hosted, rootless podman | builds `swift-cxx-interop-test` for each kas configuration in `ci/kas/` |
+| [build](.github/workflows/build.yml)             | self-hosted, rootless podman | builds `swift-cxx-interop-test` and an SDK for each kas configuration in `ci/kas/`, and compiles a program with the SDK |
 | [lint](.github/workflows/lint.yml)               | GitHub-hosted               | runs oelint-adv, fails on any finding             |
 
 ### build
@@ -238,10 +238,13 @@ GitHub-hosted runners, so it runs on a self-hosted runner labelled
 `meta-swift`. Each job:
 
 1. fetches all sources first, with retries,
-2. builds,
-3. fails when bitbake reports a non-deterministic task hash, since that
+2. builds `swift-cxx-interop-test` and the SDK of `core-image-minimal`,
+3. installs the SDK and compiles
+   [a Swift program](ci/sdk-test/hello.swift) with it, using Dispatch and
+   Foundation ([`ci/test-sdk.sh`](ci/test-sdk.sh)),
+4. fails when bitbake reports a non-deterministic task hash, since that
    breaks sstate reuse, even if every task succeeded,
-4. on failure, uploads the logs of failed tasks as the `logs-<config>`
+5. on failure, uploads the logs of failed tasks as the `logs-<config>`
    artifact of the run, kept for 14 days.
 
 Downloads, sstate and the build directory persist in `~/meta-swift-ci`, or
@@ -304,9 +307,8 @@ All projects are under [github.com/swiftlang](https://github.com/swiftlang).
   which do not exist yet.
 - [ ] CI on wrynose: build the same release as meta-webkit, once wrynose
   builds.
-- [ ] CI: build an SDK with `populate_sdk`, as the CI target does not depend
-  on the SDK host recipes (`nativesdk-swift` and the rest), and run the
-  ptest of `swift-cxx-interop-test` in QEMU.
+- [ ] CI: run the ptest of `swift-cxx-interop-test` in QEMU, and the program
+  compiled with the SDK.
 - [ ] musl: build and test qemuarm64 with `TCLIBC = "musl"`, as meta-webkit
   does.
 - [ ] riscv64: build and test it, and add it to the CI.
