@@ -250,6 +250,15 @@ newer push queues behind a running build of the same branch rather than
 cancelling it. Pull requests from forks of external contributors only run
 once approved.
 
+Any runner with the `meta-swift` label can take a job. The build parallelism
+in `ci/kas/scarthgap.yml` fits a runner with 40 CPUs and 64 GB of RAM. A
+smaller runner lowers it in the `.env` file in its installation directory:
+
+```sh
+META_SWIFT_BB_NUMBER_THREADS=4
+META_SWIFT_PARALLEL_MAKE=-j12
+```
+
 ### lint
 
 oelint-adv is pinned to the version in the workflow. Suppressed rules and
