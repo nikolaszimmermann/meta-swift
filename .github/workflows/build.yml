@@ -72,7 +72,22 @@ jobs:
           # keeps running on the build directory. Name the container after the
           # configuration: --replace removes one left over from an earlier
           # job, and the cancel step below stops it.
-          echo "KAS_RUNTIME_ARGS_CI=--name meta-swift-${{ matrix.config }} --replace" >> "$GITHUB_ENV"
+          runtime_args="--name meta-swift-${{ matrix.config }} --replace"
+
+          # The kas configuration sets the build parallelism for the largest
+          # runner. A smaller runner lowers it in the .env file in its
+          # installation directory, e.g.
+          #   META_SWIFT_BB_NUMBER_THREADS=4
+          #   META_SWIFT_PARALLEL_MAKE=-j8
+          # The values must not contain blanks.
+          if [ -n "${META_SWIFT_BB_NUMBER_THREADS:-}" ]; then
+            runtime_args="$runtime_args -e BB_NUMBER_THREADS=$META_SWIFT_BB_NUMBER_THREADS"
+          fi
+          if [ -n "${META_SWIFT_PARALLEL_MAKE:-}" ]; then
+            runtime_args="$runtime_args -e PARALLEL_MAKE=$META_SWIFT_PARALLEL_MAKE"
+          fi
+          echo "KAS_RUNTIME_ARGS_CI=$runtime_args" >> "$GITHUB_ENV"
+          echo "Runtime arguments: $runtime_args"
         env:
           META_SWIFT_CI_CACHE: ${{ vars.META_SWIFT_CI_CACHE }}
 
