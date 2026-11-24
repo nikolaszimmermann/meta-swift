@@ -22,9 +22,9 @@ permissions:
 concurrency:
   # One group per branch or pull request. On a pull request, a newer push
   # cancels the run of the old commit, whose result no longer matters. The
-  # "Stop the build container" step below stops its bitbake, and the tasks it
-  # finished are in sstate. On main every push gets a complete run, so a newer
-  # one queues behind it.
+  # "Stop the build container" step below stops its bitbake, and the next job
+  # on that runner rebuilds TMPDIR from sstate. On main every push gets a
+  # complete run, so a newer one queues behind it.
   group: meta-swift-build-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -65,6 +65,20 @@ jobs:
             echo "SSTATE_DIR=$cache/sstate-cache"
             echo "KAS_BUILD_DIR=$cache/build/${{ matrix.config }}"
           } >> "$GITHUB_ENV"
+
+          # A cancelled or killed job can stop bitbake in the middle of a
+          # task. A fakeroot task then leaves its work directory out of sync
+          # with its pseudo database, and the next run of the task fails, for
+          # example when do_populate_sdk cannot remove its old SDK. Only a job
+          # that ended on its own leaves the marker, see "Mark the build
+          # directory as clean". Without it, start over from sstate.
+          build="$cache/build/${{ matrix.config }}"
+          if [ -d "$build/tmp" ] && [ ! -e "$build/clean-shutdown" ]; then
+            echo "::notice title=Build directory::The previous job did not end on its own, rebuilding TMPDIR from sstate"
+            chmod -R u+w "$build/tmp"
+            rm -rf "$build/tmp"
+          fi
+          rm -f "$build/clean-shutdown"
 
           curl -fsSLo "$RUNNER_TEMP/kas-container" \
             "https://raw.githubusercontent.com/siemens/kas/$KAS_VERSION/kas-container"
@@ -137,6 +151,12 @@ jobs:
             echo "::error title=Non-deterministic task hash::$line"
           done <<< "$matches"
           exit 1
+
+      - name: Mark the build directory as clean
+        # Every bitbake of this job ended on its own, also on a failed task,
+        # so the next job can reuse TMPDIR.
+        if: ${{ !cancelled() }}
+        run: touch "$KAS_BUILD_DIR/clean-shutdown"
 
       - name: Collect failed task logs
         if: failure()

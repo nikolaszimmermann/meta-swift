@@ -250,8 +250,10 @@ GitHub-hosted runners, so it runs on a self-hosted runner labelled
 Downloads, sstate and the build directory persist in `~/meta-swift-ci`, or
 in the directory set by the repository variable `META_SWIFT_CI_CACHE`. A
 newer push to a pull request cancels the build of the old commit. On
-`main`, it queues behind the running build. Pull requests from forks of external contributors only run
-once approved.
+`main`, it queues behind the running build. A cancelled build can leave a
+task half done, so the next job after it rebuilds the temporary build
+directory (`TMPDIR`) from sstate. Pull requests from forks of external
+contributors only run once approved.
 
 Any runner with the `meta-swift` label can take a job. The build parallelism
 in `ci/kas/scarthgap.yml` fits a runner with 40 CPUs and 64 GB of RAM. A
