@@ -35,7 +35,7 @@ local_conf_header:
     INHERIT += "rm_work"
     # Several LLVM builds (clang-native, swift-bootstrap-llvm-native, the
     # cross clang) compile at the same time, at up to 2 GB per C++ compiler
-    # process. With bitbake's defaults (one task and one make job per CPU) a
+    # process. With the bitbake defaults (one task and one make job per CPU) a
     # 40-CPU runner with 64 GB of RAM ran out of memory.
     BB_NUMBER_THREADS = "8"
     PARALLEL_MAKE = "-j 16"
