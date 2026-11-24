@@ -8,6 +8,8 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f6c482a0548ea60d6c2e015776534035"
 
 require swift-version.inc
 
+DEPENDS += "swift-foundation swift-dispatch sqlite3 ncurses"
+
 PV = "${SWIFT_VERSION}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/swift-driver:"
@@ -35,8 +37,6 @@ S = "${SWIFT_UNPACKDIR}/swift-driver-${SWIFT_TAG}"
 
 inherit swift-cmake
 
-DEPENDS += "swift-foundation swift-dispatch sqlite3 ncurses"
-
 EXTRA_OECMAKE = "\
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
@@ -48,8 +48,6 @@ EXTRA_OECMAKE = "\
     -DFETCHCONTENT_SOURCE_DIR_LLBUILD=${SWIFT_UNPACKDIR}/swift-llbuild-${SWIFT_TAG} \
     -DFETCHCONTENT_SOURCE_DIR_TOOLSSUPPORTCORE=${SWIFT_UNPACKDIR}/swift-tools-support-core-${SWIFT_TAG} \
 "
-
-FILES:${PN} += "${bindir}"
 
 # llbuild installs its static Swift bindings, which are linked into the
 # driver already.

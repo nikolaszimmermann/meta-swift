@@ -23,7 +23,8 @@ SRCREV_stringprocessing = "91177e6225c63e885872b83d48e254b1270fa15a"
 SRCREV_syntax = "5a87516fc3dddbd23cb76358eb489915ee86b444"
 SRCREV_libdispatch = "2df91f94651f2d924d7506c9d14685929386d779"
 
-inherit native
+# nooelint: oelint.var.inheritlast.native - the recipes require this file last
+inherit_defer native
 
 DEPENDS += "swift-bootstrap-llvm-native"
 

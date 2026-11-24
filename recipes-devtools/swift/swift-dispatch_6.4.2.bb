@@ -47,6 +47,7 @@ FILES:${PN}-dev = "\
     ${libdir}/swift/linux/*.a \
     ${libdir}/cmake \
 "
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN} = "dev-so"
 
 # The build and SDK hosts need them to run swift-driver.

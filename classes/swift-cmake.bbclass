@@ -20,6 +20,7 @@ endif()
 SWIFTEOF
 }
 
+# nooelint: oelint.task.heredocs - the toolchain file takes the recipe's values
 swift_extend_toolchain_file() {
     swift_write_cmake_project_include
     cat >> ${WORKDIR}/toolchain.cmake <<SWIFTEOF

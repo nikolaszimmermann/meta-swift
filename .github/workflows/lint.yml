@@ -1,9 +1,10 @@
 name: lint
 
 # oelint-adv on the recipes, appends and classes. Cheap, so it runs on
-# GitHub-hosted runners. Report-only for now: findings show up as annotations
-# on the pull request or commit, but do not fail the job until the existing
-# ones are fixed or suppressed.
+# GitHub-hosted runners. Findings show up as annotations on the pull request or
+# commit and fail the job. The configuration, including the rules this layer
+# suppresses, is in .oelint.cfg; suppress a single finding with a
+# "# nooelint: <rule>" comment on the line before it.
 
 on:
   push:
@@ -28,9 +29,9 @@ jobs:
         run: pipx install "oelint-adv==$OELINT_ADV_VERSION"
 
       - name: Run oelint-adv
+        # From the top of the layer, where oelint-adv reads .oelint.cfg.
         run: |
           find . -path ./.git -prune -o -type f \
             \( -name '*.bb' -o -name '*.bbappend' -o -name '*.bbclass' \) -print0 |
-            sort -z | xargs -0 oelint-adv --quiet --hide info --relpaths \
-              --release scarthgap --exit-zero \
+            sort -z | xargs -0 oelint-adv \
               --messageformat '::{severity} file={path},line={line},title={id}::{msg}'

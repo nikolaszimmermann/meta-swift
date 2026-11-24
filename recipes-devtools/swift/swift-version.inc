@@ -52,4 +52,5 @@ TOOLCHAIN:class-native = "clang"
 TOOLCHAIN:class-nativesdk = "clang"
 # meta-clang only adds the clang toolchain dependency for target recipes.
 DEPENDS:append:class-native = " clang-native"
+# nooelint: oelint.vars.dependsclass - clang-crosssdk is not a native recipe
 DEPENDS:append:class-nativesdk = " clang-crosssdk-${SDK_SYS}"

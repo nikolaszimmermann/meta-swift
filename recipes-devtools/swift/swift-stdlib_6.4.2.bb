@@ -8,6 +8,8 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f6c482a0548ea60d6c2e015776534035"
 
 require swift-version.inc
 
+DEPENDS += "libdispatch clang-native"
+
 PV = "${SWIFT_VERSION}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
@@ -24,8 +26,6 @@ SRC_URI = "\
 S = "${SWIFT_SRCDIR}"
 
 inherit swift-base cmake python3native
-
-DEPENDS += "libdispatch clang-native"
 
 # Upstream points the C++ overlay at the build host's gcc (--gcc-toolchain=/usr,
 # SWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS). Here the clang driver finds
@@ -93,8 +93,6 @@ EXTRA_OECMAKE = "\
     -DSWIFT_STANDARD_LIBRARY_SWIFT_FLAGS='${@swift_xcc_flags_cmake_list(d)}' \
 "
 
-BBCLASSEXTEND = "nativesdk"
-
 FILES:${PN} = "\
     ${libdir}/swift/linux/lib*${SOLIBSDEV} \
 "
@@ -114,8 +112,10 @@ FILES:${PN}-dev = "\
     ${datadir} \
 "
 # The Swift runtime libraries are unversioned .so files loaded by SONAME.
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN} = "dev-so"
 # The C++ interop overlays (libswiftCxx*.a) are only usable with their modules.
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN}-dev = "dev-elf staticdev"
 
 # Only the dynamic stdlib is built, but the static resource directory (clang
@@ -149,3 +149,5 @@ do_install:append() {
     echo "${libdir}/swift/linux" > ${D}${sysconfdir}/ld.so.conf.d/swift.conf
 }
 FILES:${PN} += "${sysconfdir}/ld.so.conf.d/swift.conf"
+
+BBCLASSEXTEND = "nativesdk"

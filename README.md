@@ -59,8 +59,11 @@ sstate and the build directory persist in `~/meta-swift-ci`, or in the
 directory set by the repository variable `META_SWIFT_CI_CACHE`. Pull requests
 from forks of external contributors only run once approved.
 
-`.github/workflows/lint.yml` runs oelint-adv on GitHub-hosted runners. It only
-reports findings for now and does not fail.
+`.github/workflows/lint.yml` runs oelint-adv on GitHub-hosted runners and
+fails on any finding. Run it locally from the top of the layer, where it reads
+`.oelint.cfg`:
+
+    find . -name '*.bb' -o -name '*.bbappend' -o -name '*.bbclass' | xargs oelint-adv
 
 To reproduce a CI build locally:
 

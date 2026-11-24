@@ -5,12 +5,12 @@ also provides clang, lld and compiler-rt in this build."
 
 require swift-compiler.inc
 
+DEPENDS:append:class-native = " swift-stage3-native"
+
 SRC_URI += "\
     ${SRC_URI_SWIFT_IN_SWIFT} \
     file://0006-ClangImporter-Do-not-track-files-injected-into-the-C.patch \
 "
-
-DEPENDS:append:class-native = " swift-stage3-native"
 
 EXTRA_OECMAKE += "\
     -DSWIFT_ENABLE_SWIFT_IN_SWIFT=ON \
@@ -45,11 +45,12 @@ SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;
 # LLVM headers live in the system include directory of the SDK sysroot,
 # which must not become a -I for Swift (0004). SDK host executables are
 # linked by ld.bfd, which keeps them relocatable (see swift-base.bbclass).
-SRC_URI:append:class-nativesdk = "\
+SRC_URI:append:class-nativesdk = " \
     file://0004-cmake-Do-not-add-system-include-directories-of-an-in.patch \
     file://0005-SwiftCompilerSources-Use-SwiftShims-from-SWIFT_PATH_.patch \
 "
 SWIFT_INSTALL_COMPONENTS:class-nativesdk = "autolink-driver;compiler;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib"
+# nooelint: oelint.var.order.DEPENDS - with the other SDK host settings
 DEPENDS:append:class-nativesdk = " swift-native nativesdk-swift-stdlib nativesdk-clang nativesdk-libdispatch nativesdk-libxml2 nativesdk-zlib nativesdk-ncurses nativesdk-libedit nativesdk-util-linux"
 SWIFT_LLVM_PREFIX:class-nativesdk = "${STAGING_DIR_HOST}${prefix}"
 EXTRA_OECMAKE:remove:class-nativesdk = "\
@@ -90,6 +91,7 @@ do_install:append:class-nativesdk() {
 # they are not development files.
 FILES_SOLIBSDEV:class-nativesdk = ""
 FILES:${PN}:append:class-nativesdk = " ${libdir}/lib*.so"
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN}:append:class-nativesdk = " dev-so"
 
 # Build host tools that the cross-compiled SDK host compiler runs from
