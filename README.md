@@ -300,21 +300,6 @@ meta-clang, rebased onto the fork.
 
 All projects are under [github.com/swiftlang](https://github.com/swiftlang).
 
-### TODO
-
-- [ ] wrynose: add the bbappends for the OE-core clang and llvm recipes in
-  `llvm-integration/oe-core/`, which `conf/layer.conf` already points to but
-  which do not exist yet.
-- [ ] CI on wrynose: build the same release as meta-webkit, once wrynose
-  builds.
-- [ ] CI: run the ptest of `swift-cxx-interop-test` in QEMU, and the program
-  compiled with the SDK.
-- [ ] musl: build and test qemuarm64 with `TCLIBC = "musl"`, as meta-webkit
-  does.
-- [ ] riscv64: build and test it, and add it to the CI.
-- [ ] Send the patches listed under
-  [Patches to upstream](#patches-to-upstream) upstream.
-
 ### Contributing
 
 Send pull requests against `main`. Every patch needs an `Upstream-Status`
