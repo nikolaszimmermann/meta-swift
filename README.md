@@ -13,7 +13,7 @@ are all compiled by one clang, from the LLVM fork that Swift is developed on.
 | Swift           | 6.4.2                                               |
 | LLVM            | 21.1, [swiftlang/llvm-project](https://github.com/swiftlang/llvm-project) |
 | Yocto releases  | scarthgap (built and tested), wrynose (in progress) |
-| Targets         | aarch64, armv7 (hard-float)                         |
+| Targets         | aarch64, armv7 (hard-float), x86_64                 |
 | Build/SDK hosts | x86_64, aarch64                                     |
 
 **Contents:** [Quick start](#quick-start) ·
@@ -185,9 +185,9 @@ files of the Swift runtime, Foundation and Dispatch for the target. Set
 Both are LTS releases. The layer does not support the short-lived stable
 releases in between.
 
-| Targets                     | Build and SDK hosts |
-| --------------------------- | ------------------- |
-| aarch64, armv7 (hard-float) | x86_64, aarch64     |
+| Targets                             | Build and SDK hosts |
+| ----------------------------------- | ------------------- |
+| aarch64, armv7 (hard-float), x86_64 | x86_64, aarch64     |
 
 ### Limitations
 
@@ -232,8 +232,8 @@ against it. The badges at the top show their state on `main`.
 
 ### build
 
-There is one job per kas configuration: scarthgap with qemuarm64 and
-qemuarm, i.e. aarch64 and ARMv7 hard-float. The build is far too large for
+There is one job per kas configuration: scarthgap with qemuarm64, qemuarm
+and qemux86-64, i.e. aarch64, ARMv7 hard-float and x86_64. The build is far too large for
 GitHub-hosted runners, so it runs on a self-hosted runner labelled
 `meta-swift`. Each job:
 
