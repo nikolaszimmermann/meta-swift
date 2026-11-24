@@ -5,7 +5,7 @@
 
 Yocto/OpenEmbedded layer that builds the [Swift](https://www.swift.org)
 toolchain **from source**, on top of the clang/LLVM recipes of meta-clang
-(scarthgap, walnascar) or OE-core (whinlatter and later).
+(scarthgap) or OE-core (wrynose).
 
 No prebuilt Swift binaries are downloaded at any point. Since Swift 6.4 the
 compiler can no longer be built from C++ alone, so, like nixpkgs, the layer
@@ -39,9 +39,9 @@ bootstrap stages are not.
 
 - [openembedded-core](https://git.openembedded.org/openembedded-core)
   (`LAYERDEPENDS`), on the branch of the release you build.
-- [meta-clang](https://github.com/kraj/meta-clang) for scarthgap and
-  walnascar (`LAYERRECOMMENDS`). From whinlatter on, OE-core carries the
-  clang recipes and meta-clang is not needed.
+- [meta-clang](https://github.com/kraj/meta-clang) for scarthgap
+  (`LAYERRECOMMENDS`). In wrynose, OE-core carries the clang recipes and
+  meta-clang is not needed.
 
 Add the layer with
 
@@ -67,17 +67,19 @@ in `local.conf` or a distro configuration. Without it, all Swift recipes are
 skipped.
 
 Note that the fork follows LLVM with some delay. Swift 6.4.2 is LLVM 21.1,
-which is newer than meta-clang for scarthgap (20.1) and matches whinlatter, but
-older than wrynose (22.1) and master. Enabling the layer there downgrades the
+which is newer than meta-clang for scarthgap (20.1) but older than wrynose
+(22.1) and master. Enabling the layer there downgrades the
 LLVM used by every clang-built recipe.
 
 ## Supported
 
-| Release            | LLVM recipes from       | Status           |
-| ------------------ | ----------------------- | ---------------- |
-| scarthgap          | meta-clang (any branch) | built and tested |
-| walnascar          | meta-clang              | parse only       |
-| whinlatter, wrynose| OE-core                 | in progress      |
+| Release   | LLVM recipes from       | Status           |
+| --------- | ----------------------- | ---------------- |
+| scarthgap | meta-clang (any branch) | built and tested |
+| wrynose   | OE-core                 | in progress      |
+
+Both are LTS releases. The layer does not support the short-lived stable
+releases in between.
 
 Targets: aarch64, armv7 (hard-float).
 Build/SDK hosts: x86_64, aarch64.
@@ -209,11 +211,9 @@ swiftlang/swift-driver:
 
 ## TODO
 
-- whinlatter, wrynose: add the bbappends for the OE-core clang and llvm
-  recipes in `llvm-integration/oe-core/`, which `conf/layer.conf` already
-  points to but which do not exist yet.
-- walnascar: build and test it. It only parses so far, and the rebased LLVM
-  patch series exists for scarthgap only (`files-scarthgap`).
+- wrynose: add the bbappends for the OE-core clang and llvm recipes in
+  `llvm-integration/oe-core/`, which `conf/layer.conf` already points to but
+  which do not exist yet.
 - riscv64: build and test it, and add it to the CI.
 - CI on wrynose: build the same release as meta-webkit, once wrynose
   builds.
