@@ -1,9 +1,12 @@
 # The bootstrap compilers.
 #
-# Swift's compiler is partly written in Swift. Since Swift 6.4 it can no
-# longer be built from C++ alone (lib/SILOptimizer/PassManager/PassManager.cpp
-# errors out without SWIFT_ENABLE_SWIFT_IN_SWIFT), and the Swift sources of a
-# release only build against that release's LLVM fork. So, like nixpkgs, this
+# The Swift compiler is partly written in Swift. Swift 6.2 is the last
+# release that builds from C++ alone: upstream stopped maintaining the C++-only
+# bootstrap during 6.3 development, see
+# https://forums.swift.org/t/dropping-the-requirement-for-c-only-bootstrapping/87739
+# Swift 6.4 errors out in lib/SILOptimizer/PassManager/PassManager.cpp without
+# SWIFT_ENABLE_SWIFT_IN_SWIFT. The Swift sources of a release also only build
+# against the LLVM fork of that release. So, like nixpkgs, this
 # layer bootstraps through Swift 6.2, built against its own LLVM 19 fork
 # (swift-bootstrap-llvm-native):
 #   swift-stage0-native  6.2, C++ only

@@ -7,9 +7,11 @@ Yocto/OpenEmbedded layer that builds the [Swift](https://www.swift.org)
 toolchain **from source**, on top of the clang/LLVM recipes of meta-clang
 (scarthgap) or OE-core (wrynose).
 
-No prebuilt Swift binaries are downloaded at any point. Since Swift 6.4 the
-compiler can no longer be built from C++ alone, so, like nixpkgs, the layer
-bootstraps through Swift 6.2 on its own LLVM fork:
+No prebuilt Swift binaries are downloaded at any point. The compiler is
+partly written in Swift, and Swift 6.2 is the
+[last release that builds from C++ alone](https://forums.swift.org/t/dropping-the-requirement-for-c-only-bootstrapping/87739).
+So, like nixpkgs, the layer bootstraps through Swift 6.2 on its own LLVM
+fork:
 
 ```mermaid
 flowchart TD
@@ -68,8 +70,8 @@ skipped.
 
 Note that the fork follows LLVM with some delay. Swift 6.4.2 is LLVM 21.1,
 which is newer than meta-clang for scarthgap (20.1) but older than wrynose
-(22.1) and master. Enabling the layer there downgrades the
-LLVM used by every clang-built recipe.
+(22.1) and master. **Enabling the layer there downgrades the LLVM used by
+every clang-built recipe.**
 
 ## Supported
 
