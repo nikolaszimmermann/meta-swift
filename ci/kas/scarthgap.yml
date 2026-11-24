@@ -70,5 +70,8 @@ local_conf_header:
     IMAGE_INSTALL:append:pn-core-image-minimal = " openssh-sftp-server ptest-runner swift-cxx-interop-test-ptest swift-foundation"
     TEST_SUITES = "ping ssh ptest swift_sdk"
     TEST_RUNQEMUPARAMS = "slirp nographic"
+    # testimage uses KVM for an x86 image on an x86 host, but the runners
+    # are not expected to provide /dev/kvm. QEMU always emulates.
+    QEMU_USE_KVM = "0"
     QB_MEM = "-m 1024"
     SWIFT_SDK_TEST_PROGRAM = "${TOPDIR}/sdk-test/hello"
