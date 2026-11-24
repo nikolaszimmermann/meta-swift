@@ -21,10 +21,23 @@ SWIFT_TUNE_CCARGS:class-nativesdk = "${SDK_CC_ARCH}"
 SWIFT_TUNE_CCARGS:class-native = "${BUILD_CC_ARCH}"
 
 def swift_xcc_args(d):
-    import shlex
+    import re, shlex
+    tune = shlex.split(d.getVar('SWIFT_TUNE_CCARGS') or '')
     args = []
-    for f in shlex.split(d.getVar('SWIFT_TUNE_CCARGS') or ''):
+    for f in tune:
         args += ['-Xcc', f]
+    # With __SSE3__ defined, the bits/opt_random.h of libstdc++ includes
+    # <pmmintrin.h>. Its clang module, _Builtin_intrinsics, includes
+    # <stdlib.h> from mm_malloc.h, which resolves to the C++ <stdlib.h> and
+    # with it to the std module that Swift builds for libstdc++:
+    #   error: cyclic dependency in module 'std': std -> _Builtin_intrinsics -> std
+    # Upstream Swift 6.4.2 fails the same way with -Xcc -msse3. The OE x86 tunes
+    # enable SSE3 (core2 and newer), so hide the macro from the importer. The
+    # code generation keeps SSE3, unlike with -mno-sse3, which would also turn
+    # off SSSE3 and SSE4. TARGET_ARCH is the machine the tune describes, also in
+    # meta-environment, which runs on the SDK host but describes the target.
+    if tune and re.match(r'(x86_64|i[3-6]86)$', d.getVar('TARGET_ARCH') or ''):
+        args += ['-Xcc', '-U__SSE3__']
     return args
 
 def swift_xcc_flags(d):
