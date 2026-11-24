@@ -11,6 +11,8 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f6c482a0548ea60d6c2e015776534035"
 
 require swift-version.inc
 
+DEPENDS += "clang-native ninja-native libxml2-native util-linux-native zlib-native ncurses-native libedit-native libdispatch-native"
+
 PV = "${SWIFT_VERSION}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
@@ -29,8 +31,6 @@ S = "${SWIFT_SRCDIR}"
 
 inherit cmake python3native
 
-DEPENDS += "clang-native ninja-native libxml2-native util-linux-native zlib-native ncurses-native libedit-native libdispatch-native"
-
 # The bootstrap stage that builds this compiler, if any.
 SWIFT_BUILD_COMPILER_DIR ?= ""
 
@@ -41,7 +41,9 @@ SWIFT_BUILD_COMPILER_DIR ?= ""
 # Swift's build links its Swift tools with CMAKE_Swift_FLAGS only, so pass it
 # there too, with the stage's own Swift flags (SWIFT_STAGE_SWIFTFLAGS).
 SWIFT_STAGE_SWIFTFLAGS ?= ""
+# nooelint: oelint.vars.inconspaces - the Python expression adds the blank
 LDFLAGS:append:class-native = "${@' -Wl,-rpath-link,%s/lib/swift/linux' % d.getVar('SWIFT_BUILD_COMPILER_DIR') if d.getVar('SWIFT_BUILD_COMPILER_DIR') else ''}"
+# nooelint: oelint.vars.inconspaces
 EXTRA_OECMAKE:append:class-native = "${@" -DCMAKE_Swift_FLAGS='%s -Xlinker -rpath-link -Xlinker %s/lib/swift/linux'" % (d.getVar('SWIFT_STAGE_SWIFTFLAGS'), d.getVar('SWIFT_BUILD_COMPILER_DIR')) if d.getVar('SWIFT_BUILD_COMPILER_DIR') else ''}"
 
 # Where this stage installs. Bootstrap stages stay out of the regular prefix.

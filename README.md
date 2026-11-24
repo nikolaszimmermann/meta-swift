@@ -47,3 +47,28 @@ Targets: aarch64, armv7 (hard-float). Build/SDK hosts: x86_64, aarch64.
 
 sets up `CMAKE_Swift_COMPILER`, the target triple and the sysroot in the
 generated CMake toolchain file, and depends on the Swift runtime.
+
+## CI
+
+`.github/workflows/build.yml` builds `swift-cxx-interop-test` for the kas
+configurations in `ci/kas/` (scarthgap; qemuarm64 and qemuarm, i.e. aarch64
+and ARMv7 hard-float) on pushes to `main` and on pull requests against it.
+The build is far too large for GitHub-hosted runners, so it runs on a
+self-hosted runner labelled `meta-swift` with rootless podman. Downloads,
+sstate and the build directory persist in `~/meta-swift-ci`, or in the
+directory set by the repository variable `META_SWIFT_CI_CACHE`. Pull requests
+from forks of external contributors only run once approved.
+
+`.github/workflows/lint.yml` runs oelint-adv on GitHub-hosted runners and
+fails on any finding. Run it locally from the top of the layer, where it reads
+`.oelint.cfg`:
+
+    find . -name '*.bb' -o -name '*.bbappend' -o -name '*.bbclass' | xargs oelint-adv
+
+To reproduce a CI build locally:
+
+    KAS_WORK_DIR=~/meta-swift-work DL_DIR=... SSTATE_DIR=... \
+        kas-container build ci/kas/scarthgap-qemuarm64.yml
+
+`KAS_WORK_DIR` must be outside this checkout, as kas clones poky and
+meta-clang there.

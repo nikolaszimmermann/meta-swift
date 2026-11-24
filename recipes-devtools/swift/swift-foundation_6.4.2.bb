@@ -8,6 +8,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=1cd73afe3fb82e8d5c899b9d926451d0"
 
 require swift-version.inc
 
+DEPENDS += "swift-dispatch swift-foundation-macros-native curl libxml2"
+
 PV = "${SWIFT_VERSION}"
 
 SRC_URI = "\
@@ -20,8 +22,6 @@ SRC_URI = "\
 S = "${SWIFT_UNPACKDIR}/swift-corelibs-foundation-${SWIFT_TAG}"
 
 inherit swift-cmake
-
-DEPENDS += "swift-dispatch swift-foundation-macros-native curl libxml2"
 
 EXTRA_OECMAKE = "\
     -DCMAKE_BUILD_TYPE=Release \
@@ -50,6 +50,7 @@ FILES:${PN}-dev = "\
     ${libdir}/swift/linux/*.a \
     ${libdir}/cmake \
 "
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN} = "dev-so"
 
 # The build and SDK hosts need them to run swift-driver.

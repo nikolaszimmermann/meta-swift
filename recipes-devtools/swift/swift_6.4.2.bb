@@ -5,12 +5,12 @@ also provides clang, lld and compiler-rt in this build."
 
 require swift-compiler.inc
 
+DEPENDS:append:class-native = " swift-stage3-native"
+
 SRC_URI += "\
     ${SRC_URI_SWIFT_IN_SWIFT} \
     file://0006-ClangImporter-Do-not-track-files-injected-into-the-C.patch \
 "
-
-DEPENDS:append:class-native = " swift-stage3-native"
 
 EXTRA_OECMAKE += "\
     -DSWIFT_ENABLE_SWIFT_IN_SWIFT=ON \
@@ -45,11 +45,12 @@ SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;
 # LLVM headers live in the system include directory of the SDK sysroot,
 # which must not become a -I for Swift (0004). SDK host executables are
 # linked by ld.bfd, which keeps them relocatable (see swift-base.bbclass).
-SRC_URI:append:class-nativesdk = "\
+SRC_URI:append:class-nativesdk = " \
     file://0004-cmake-Do-not-add-system-include-directories-of-an-in.patch \
     file://0005-SwiftCompilerSources-Use-SwiftShims-from-SWIFT_PATH_.patch \
 "
 SWIFT_INSTALL_COMPONENTS:class-nativesdk = "autolink-driver;compiler;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib"
+# nooelint: oelint.var.order.DEPENDS - with the other SDK host settings
 DEPENDS:append:class-nativesdk = " swift-native nativesdk-swift-stdlib nativesdk-clang nativesdk-libdispatch nativesdk-libxml2 nativesdk-zlib nativesdk-ncurses nativesdk-libedit nativesdk-util-linux"
 SWIFT_LLVM_PREFIX:class-nativesdk = "${STAGING_DIR_HOST}${prefix}"
 EXTRA_OECMAKE:remove:class-nativesdk = "\
@@ -90,6 +91,7 @@ do_install:append:class-nativesdk() {
 # they are not development files.
 FILES_SOLIBSDEV:class-nativesdk = ""
 FILES:${PN}:append:class-nativesdk = " ${libdir}/lib*.so"
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN}:append:class-nativesdk = " dev-so"
 
 # Build host tools that the cross-compiled SDK host compiler runs from
@@ -99,6 +101,22 @@ do_install:append:class-native() {
     for t in ${SWIFT_NATIVE_HELPER_TOOLS}; do
         install -m 0755 ${B}/bin/$t ${D}${bindir}/
     done
+}
+
+# The driver loads libSwiftScan from lib/swift/host, where upstream installs a
+# symlink to the library in lib/swift/host/compiler. OE rewrites the library's
+# rpath to the shared libLLVM relative to the directory of the file itself,
+# which does not resolve when loaded through the symlink: the driver then warns
+# about an incompatible libSwiftScan and falls back to running swift-frontend
+# for the dependency scan. Install the library in lib/swift/host and the
+# symlink in lib/swift/host/compiler; its upstream rpath works from both.
+do_install:append() {
+    host=${D}${libdir}/swift/host
+    if [ -L $host/lib_InternalSwiftScan.so ]; then
+        rm $host/lib_InternalSwiftScan.so
+        mv $host/compiler/lib_InternalSwiftScan.so $host/
+        ln -s ../lib_InternalSwiftScan.so $host/compiler/lib_InternalSwiftScan.so
+    fi
 }
 
 BBCLASSEXTEND = "native nativesdk"

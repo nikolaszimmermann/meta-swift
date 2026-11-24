@@ -7,14 +7,15 @@ LIC_FILES_CHKSUM = "file://LICENSE.md;md5=2380e856fbdbc7ccae6bd699d53ec121"
 
 require swift-version.inc
 
+DEPENDS += "swift-native ninja-native"
+
 PV = "${SWIFT_VERSION}"
 
 SRC_URI = "${SRC_URI_SWIFT_FOUNDATION} ${SRC_URI_SWIFT_SYNTAX}"
 S = "${SWIFT_UNPACKDIR}/swift-foundation-${SWIFT_TAG}"
 
-inherit cmake swift-cmake-tool native
-
-DEPENDS += "swift-native ninja-native"
+inherit cmake swift-cmake-tool
+inherit_defer native
 
 OECMAKE_SOURCEPATH = "${S}/Sources/FoundationMacros"
 

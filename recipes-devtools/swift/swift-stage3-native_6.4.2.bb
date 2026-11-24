@@ -4,7 +4,7 @@ clang-native. It builds swift-native and is never packaged."
 
 require swift-compiler.inc
 
-inherit native
+inherit_defer native
 
 DEPENDS += "swift-stage2-native"
 

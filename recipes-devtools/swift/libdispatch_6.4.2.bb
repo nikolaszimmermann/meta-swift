@@ -21,7 +21,6 @@ S = "${SWIFT_LIBDISPATCH_SRCDIR}"
 
 inherit cmake
 
-
 EXTRA_OECMAKE = "\
     -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_SWIFT=OFF \
@@ -40,7 +39,9 @@ FILES:${PN}-dev += "${libdir}/cmake/dispatch"
 
 # The libraries are unversioned and loaded by that name.
 FILES_SOLIBSDEV = ""
+# nooelint: oelint.vars.filessetting.hidden - FILES_SOLIBSDEV is empty
 FILES:${PN} += "${libdir}/lib*.so"
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN} += "dev-so"
 
 BBCLASSEXTEND = "native nativesdk"

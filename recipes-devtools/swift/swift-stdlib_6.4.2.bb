@@ -8,6 +8,8 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f6c482a0548ea60d6c2e015776534035"
 
 require swift-version.inc
 
+DEPENDS += "libdispatch clang-native"
+
 PV = "${SWIFT_VERSION}"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
@@ -25,8 +27,6 @@ S = "${SWIFT_SRCDIR}"
 
 inherit swift-base cmake python3native
 
-DEPENDS += "libdispatch clang-native"
-
 # Upstream points the C++ overlay at the build host's gcc (--gcc-toolchain=/usr,
 # SWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS). Here the clang driver finds
 # the gcc install and libstdc++ of the target sysroot by itself.
@@ -38,6 +38,10 @@ DEPENDS += "libdispatch clang-native"
 #
 # The runtime pieces are written in C++ and compiled by clang-cross; the
 # Swift parts by swift-native. Both are the same swiftlang LLVM.
+#
+# Swift's CMake does not use SWIFTFLAGS: pass it ConciseMagicFile (see
+# swift-base.bbclass), so that #file does not put build paths into the
+# runtime libraries and the inlinable code of the modules.
 SWIFT_THREADING_PACKAGE = "${@oe.utils.conditional('SWIFT_TARGET_ARCH', 'armv7', 'c11', 'linux', d)}"
 
 EXTRA_OECMAKE = "\
@@ -91,9 +95,8 @@ EXTRA_OECMAKE = "\
     -DSWIFT_STDLIB_INSTALL_ONLY_CLANG_RESOURCE_HEADERS=ON \
     -DSWIFT_INSTALL_COMPONENTS='stdlib;sdk-overlay;clang-builtin-headers;license' \
     -DSWIFT_STANDARD_LIBRARY_SWIFT_FLAGS='${@swift_xcc_flags_cmake_list(d)}' \
+    -DSWIFT_STDLIB_EXTRA_SWIFT_COMPILE_FLAGS='${@';'.join(d.getVar('SWIFT_CONCISE_MAGIC_FILE').split())}' \
 "
-
-BBCLASSEXTEND = "nativesdk"
 
 FILES:${PN} = "\
     ${libdir}/swift/linux/lib*${SOLIBSDEV} \
@@ -114,14 +117,24 @@ FILES:${PN}-dev = "\
     ${datadir} \
 "
 # The Swift runtime libraries are unversioned .so files loaded by SONAME.
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN} = "dev-so"
 # The C++ interop overlays (libswiftCxx*.a) are only usable with their modules.
+# nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN}-dev = "dev-elf staticdev"
 
 # Only the dynamic stdlib is built, but the static resource directory (clang
 # headers, link arguments) is installed regardless.
 do_install:append() {
     rm -rf ${D}${libdir}/swift_static
+}
+
+# gyb marks where the lines of its outputs come from with comments that carry
+# the absolute path of the template in the build directory. The installed
+# Glibc module map and header do not need them.
+do_install:append() {
+    find ${D}${libdir}/swift \( -name '*.modulemap' -o -name '*.h' \) -type f \
+        -exec sed -i '/^\/\/ ###sourceLocation(file: /d' {} +
 }
 
 # The C++ interoperability overlays (Cxx, CxxStdlib and their static
@@ -149,3 +162,5 @@ do_install:append() {
     echo "${libdir}/swift/linux" > ${D}${sysconfdir}/ld.so.conf.d/swift.conf
 }
 FILES:${PN} += "${sysconfdir}/ld.so.conf.d/swift.conf"
+
+BBCLASSEXTEND = "nativesdk"

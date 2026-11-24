@@ -1,0 +1,10 @@
+# aarch64
+#
+#   kas-container build ci/kas/scarthgap-qemuarm64.yml
+
+header:
+  version: 14
+  includes:
+    - ci/kas/scarthgap.yml
+
+machine: qemuarm64

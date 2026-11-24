@@ -1,0 +1,137 @@
+name: build
+
+# Full from-source builds of LLVM and the Swift bootstrap do not fit on
+# GitHub-hosted runners, so this runs on a self-hosted runner carrying the
+# "meta-swift" label. The runner needs rootless podman; kas-container provides
+# the Yocto host environment.
+#
+# The repository is public and the runner is a private machine: pull requests
+# from forks of external contributors only run once approved, as set in the
+# repository settings (Actions > General > "Require approval for all external
+# contributors"). Review such a pull request before approving its run.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # One queue per branch or pull request; a newer push replaces a run that is
+  # still pending. Queue rather than cancel a running one: a cancelled job may
+  # leave bitbake running in the container, on the build directory the next
+  # run uses.
+  group: meta-swift-build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  KAS_VERSION: "5.5"
+  KAS_CONTAINER_SHA256: 7a8186f18d14ec6bec3f8d5188eba7a60f1ef4b5587af15917527588cc7d738a
+  KAS_CONTAINER_ENGINE: podman
+
+jobs:
+  build:
+    name: ${{ matrix.config }}
+    runs-on: [self-hosted, linux, x64, meta-swift]
+    # A cold build (LLVM + three Swift bootstrap stages) takes many hours.
+    timeout-minutes: 1440
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - scarthgap-qemuarm64
+          - scarthgap-qemuarm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up caches and kas-container
+        run: |
+          # Downloads, sstate, the layer checkouts and the build directory
+          # persist across runs in a directory of their own, outside the
+          # workspace. Override with the repository variable
+          # META_SWIFT_CI_CACHE.
+          cache="${META_SWIFT_CI_CACHE:-$HOME/meta-swift-ci}"
+          mkdir -p "$cache/downloads" "$cache/sstate-cache" \
+            "$cache/work/${{ matrix.config }}" "$cache/build/${{ matrix.config }}"
+          {
+            echo "KAS_WORK_DIR=$cache/work/${{ matrix.config }}"
+            echo "DL_DIR=$cache/downloads"
+            echo "SSTATE_DIR=$cache/sstate-cache"
+            echo "KAS_BUILD_DIR=$cache/build/${{ matrix.config }}"
+          } >> "$GITHUB_ENV"
+
+          curl -fsSLo "$RUNNER_TEMP/kas-container" \
+            "https://raw.githubusercontent.com/siemens/kas/$KAS_VERSION/kas-container"
+          echo "$KAS_CONTAINER_SHA256  $RUNNER_TEMP/kas-container" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/kas-container"
+
+          # Cancelling a job does not stop its container, whose bitbake then
+          # keeps running on the build directory. Name the container after the
+          # configuration: --replace removes one left over from an earlier
+          # job, and the cancel step below stops it.
+          echo "KAS_RUNTIME_ARGS_CI=--name meta-swift-${{ matrix.config }} --replace" >> "$GITHUB_ENV"
+        env:
+          META_SWIFT_CI_CACHE: ${{ vars.META_SWIFT_CI_CACHE }}
+
+      - name: Fetch
+        run: |
+          # The cold build fetches llvm-project and many Swift repositories;
+          # retry so that a network hiccup does not cost a run. The build step
+          # retries any fetch that still failed.
+          for i in 1 2 3 4 5; do
+            echo "Fetch attempt $i of 5"
+            if "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
+                build "ci/kas/${{ matrix.config }}.yml" -- --runall=fetch; then
+              exit 0
+            fi
+          done
+          echo "::warning title=Fetch::Some sources could not be fetched after 5 attempts"
+
+      - name: Build
+        run: |
+          set -o pipefail
+          "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
+            build "ci/kas/${{ matrix.config }}.yml" 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Stop the build container
+        if: cancelled()
+        run: podman stop --time 60 "meta-swift-${{ matrix.config }}" || true
+
+      - name: Check for non-deterministic task hashes
+        if: ${{ !cancelled() }}
+        run: |
+          # Metadata that changes between parses breaks sstate reuse. Fail on
+          # it even if every task succeeded.
+          matches=$(grep -E 'Taskhash mismatch|Basehash mismatch|the basehash value changed' \
+            "$RUNNER_TEMP/build.log" | sort -u || true)
+          if [ -z "$matches" ]; then
+            exit 0
+          fi
+          while IFS= read -r line; do
+            echo "::error title=Non-deterministic task hash::$line"
+          done <<< "$matches"
+          exit 1
+
+      - name: Collect failed task logs
+        if: failure()
+        run: |
+          # kas-container mounts KAS_BUILD_DIR at /build.
+          mkdir -p "$RUNNER_TEMP/logs"
+          cp "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/logs/"
+          sed -n 's|^.*Logfile of failure stored in: /build/||p' "$RUNNER_TEMP/build.log" |
+            sort -u | while IFS= read -r log; do
+            dest="$RUNNER_TEMP/logs/$(echo "$log" | cut -d/ -f3-4 | tr / _)-$(basename "$log")"
+            cp "$KAS_BUILD_DIR/$log" "$dest" || true
+          done
+
+      - name: Upload failed task logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.config }}
+          path: ${{ runner.temp }}/logs
+          if-no-files-found: ignore
+          retention-days: 14

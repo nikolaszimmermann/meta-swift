@@ -16,13 +16,15 @@
 SWIFT_VERSION = "6.2.4"
 SWIFT_SYNTAX_VERSION = "swift-6.2.4-RELEASE"
 
-SRC_URI[swift.sha256sum] = "3b29b8aecfd6f401a2f46b28947850a53ac1cda46e54380fbd6d391c4f718fad"
-SRC_URI[cmark.sha256sum] = "6012b59d842b2864623901b1e9d527d5b314af87858e0af8661e191d92d14922"
-SRC_URI[stringprocessing.sha256sum] = "b0ab328fe9f80f08b71ee6c5e81c7c3a001c5d924b207b5a16d8027815ba1998"
-SRC_URI[syntax.sha256sum] = "53e644fb9c824cea726775e7b48ee5217323922917a7e1bc54fdc86e13058f80"
-SRC_URI[libdispatch.sha256sum] = "09707e4ccdd19d4f23e356bf032b28fbf2b447c3645aff26775e25a97e314486"
+# swift-${SWIFT_VERSION}-RELEASE of each repository, swift-syntax included.
+SRCREV_swift = "ee343b46aef81c3ac7c5d7960cb35a41a88c5a9b"
+SRCREV_cmark = "5d9bdaa4228b381639fff09403e39a04926e2dbe"
+SRCREV_stringprocessing = "91177e6225c63e885872b83d48e254b1270fa15a"
+SRCREV_syntax = "5a87516fc3dddbd23cb76358eb489915ee86b444"
+SRCREV_libdispatch = "2df91f94651f2d924d7506c9d14685929386d779"
 
-inherit native
+# nooelint: oelint.var.inheritlast.native - the recipes require this file last
+inherit_defer native
 
 DEPENDS += "swift-bootstrap-llvm-native"
 

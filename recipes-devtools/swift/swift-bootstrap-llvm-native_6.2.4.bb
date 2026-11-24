@@ -9,15 +9,17 @@ LIC_FILES_CHKSUM = "file://llvm/LICENSE.TXT;md5=8a15a0759ef07f2682d2ba4b893c9afe
 
 SWIFT_BOOTSTRAP_TAG = "swift-${PV}-RELEASE"
 
-SRC_URI = "https://github.com/swiftlang/llvm-project/archive/refs/tags/${SWIFT_BOOTSTRAP_TAG}.tar.gz;downloadfilename=llvm-project-${SWIFT_BOOTSTRAP_TAG}.tar.gz"
-SRC_URI[sha256sum] = "8e02cf861773b8b5b829b208ba892f240a8c3c6d336190c5eca32e393b783e4a"
+DEPENDS += "ninja-native zlib-native"
+
+SRC_URI = "git://github.com/swiftlang/llvm-project.git;protocol=https;nobranch=1;destsuffix=llvm-project-${SWIFT_BOOTSTRAP_TAG}"
+# swift-6.2.4-RELEASE
+SRCREV = "8f0d2ca924db37c8f8161d55c21b9097b05b72f3"
 
 S = "${@d.getVar('UNPACKDIR') or d.getVar('WORKDIR')}/llvm-project-${SWIFT_BOOTSTRAP_TAG}"
 OECMAKE_SOURCEPATH = "${S}/llvm"
 
-inherit cmake native python3native
-
-DEPENDS += "ninja-native zlib-native"
+inherit cmake python3native
+inherit_defer native
 
 SWIFT_BOOTSTRAP_LLVM_PREFIX = "${libexecdir}/swift-bootstrap-llvm"
 

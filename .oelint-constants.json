@@ -1,0 +1,48 @@
+{
+  "variables": {
+    "known": [
+      "BASEURI",
+      "MAJOR_VER",
+      "MINOR_VER",
+      "PATCH_VER",
+      "SRCREV_cmark",
+      "SRCREV_collections",
+      "SRCREV_corelibsfoundation",
+      "SRCREV_foundation",
+      "SRCREV_foundationicu",
+      "SRCREV_libdispatch",
+      "SRCREV_stringprocessing",
+      "SRCREV_swift",
+      "SRCREV_swiftllvm",
+      "SRCREV_syntax",
+      "SRC_URI_SWIFT",
+      "SRC_URI_SWIFT_CMARK",
+      "SRC_URI_SWIFT_COLLECTIONS",
+      "SRC_URI_SWIFT_CORELIBS_FOUNDATION",
+      "SRC_URI_SWIFT_FOUNDATION",
+      "SRC_URI_SWIFT_FOUNDATION_ICU",
+      "SRC_URI_SWIFT_IN_SWIFT",
+      "SRC_URI_SWIFT_LIBDISPATCH",
+      "SRC_URI_SWIFT_STRING_PROCESSING",
+      "SRC_URI_SWIFT_SYNTAX",
+      "SWIFTC",
+      "SWIFTFLAGS",
+      "SWIFTSDK",
+      "SWIFT_BUILD_COMPILER_DIR",
+      "SWIFT_CMARK_SRCDIR",
+      "SWIFT_LIBDISPATCH_SRCDIR",
+      "SWIFT_SRCDIR",
+      "SWIFT_STAGE_SWIFTFLAGS",
+      "SWIFT_STRING_PROCESSING_SRCDIR",
+      "SWIFT_SYNTAX_SRCDIR",
+      "SWIFT_TARGET",
+      "SWIFT_TARGET_ARCH",
+      "VER_SUFFIX"
+    ]
+  },
+  "replacements": {
+    "distros": [
+      "swiftllvm"
+    ]
+  }
+}
