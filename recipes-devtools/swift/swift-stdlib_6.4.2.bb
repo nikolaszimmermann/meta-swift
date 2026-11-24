@@ -38,6 +38,10 @@ inherit swift-base cmake python3native
 #
 # The runtime pieces are written in C++ and compiled by clang-cross; the
 # Swift parts by swift-native. Both are the same swiftlang LLVM.
+#
+# Swift's CMake does not use SWIFTFLAGS: pass it ConciseMagicFile (see
+# swift-base.bbclass), so that #file does not put build paths into the
+# runtime libraries and the inlinable code of the modules.
 SWIFT_THREADING_PACKAGE = "${@oe.utils.conditional('SWIFT_TARGET_ARCH', 'armv7', 'c11', 'linux', d)}"
 
 EXTRA_OECMAKE = "\
@@ -91,6 +95,7 @@ EXTRA_OECMAKE = "\
     -DSWIFT_STDLIB_INSTALL_ONLY_CLANG_RESOURCE_HEADERS=ON \
     -DSWIFT_INSTALL_COMPONENTS='stdlib;sdk-overlay;clang-builtin-headers;license' \
     -DSWIFT_STANDARD_LIBRARY_SWIFT_FLAGS='${@swift_xcc_flags_cmake_list(d)}' \
+    -DSWIFT_STDLIB_EXTRA_SWIFT_COMPILE_FLAGS='${@';'.join(d.getVar('SWIFT_CONCISE_MAGIC_FILE').split())}' \
 "
 
 FILES:${PN} = "\
@@ -122,6 +127,14 @@ INSANE_SKIP:${PN}-dev = "dev-elf staticdev"
 # headers, link arguments) is installed regardless.
 do_install:append() {
     rm -rf ${D}${libdir}/swift_static
+}
+
+# gyb marks where the lines of its outputs come from with comments that carry
+# the absolute path of the template in the build directory. The installed
+# Glibc module map and header do not need them.
+do_install:append() {
+    find ${D}${libdir}/swift \( -name '*.modulemap' -o -name '*.h' \) -type f \
+        -exec sed -i '/^\/\/ ###sourceLocation(file: /d' {} +
 }
 
 # The C++ interoperability overlays (Cxx, CxxStdlib and their static
