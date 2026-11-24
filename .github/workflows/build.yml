@@ -78,7 +78,7 @@ jobs:
           # runner. A smaller runner lowers it in the .env file in its
           # installation directory, e.g.
           #   META_SWIFT_BB_NUMBER_THREADS=4
-          #   META_SWIFT_PARALLEL_MAKE=-j12
+          #   META_SWIFT_PARALLEL_MAKE=-j8
           # The values must not contain blanks.
           if [ -n "${META_SWIFT_BB_NUMBER_THREADS:-}" ]; then
             runtime_args="$runtime_args -e BB_NUMBER_THREADS=$META_SWIFT_BB_NUMBER_THREADS"

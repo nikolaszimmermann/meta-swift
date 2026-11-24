@@ -256,7 +256,7 @@ smaller runner lowers it in the `.env` file in its installation directory:
 
 ```sh
 META_SWIFT_BB_NUMBER_THREADS=4
-META_SWIFT_PARALLEL_MAKE=-j12
+META_SWIFT_PARALLEL_MAKE=-j8
 ```
 
 ### lint
