@@ -23,7 +23,7 @@ jobs:
       # which rules fire.
       OELINT_ADV_VERSION: "9.6.1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install oelint-adv
         run: pipx install "oelint-adv==$OELINT_ADV_VERSION"

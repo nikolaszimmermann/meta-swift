@@ -45,7 +45,7 @@ jobs:
           - scarthgap-qemuarm64
           - scarthgap-qemuarm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up caches and kas-container
         run: |
@@ -144,7 +144,7 @@ jobs:
 
       - name: Upload failed task logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: logs-${{ matrix.config }}
           path: ${{ runner.temp }}/logs
