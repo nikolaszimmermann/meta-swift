@@ -60,9 +60,12 @@ local_conf_header:
   # swift-cxx-interop-test, then the program that ci/test-sdk.sh compiled
   # with the SDK. slirp networking needs no root rights and no tap devices.
   # scp in the kas container uses the SFTP protocol, hence openssh with its
-  # sftp-server instead of dropbear.
+  # sftp-server instead of dropbear. rm_work would remove the work directory
+  # of the image once the image is built, while do_populate_sdk of the same
+  # recipe may still install from the package repository in it.
   qemu-test: |
     IMAGE_CLASSES += "testimage"
+    RM_WORK_EXCLUDE += "core-image-minimal"
     IMAGE_FEATURES:append:pn-core-image-minimal = " ssh-server-openssh allow-empty-password empty-root-password allow-root-login"
     IMAGE_INSTALL:append:pn-core-image-minimal = " openssh-sftp-server ptest-runner swift-cxx-interop-test-ptest swift-foundation"
     TEST_SUITES = "ping ssh ptest swift_sdk"
