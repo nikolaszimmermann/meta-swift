@@ -20,12 +20,13 @@ permissions:
   contents: read
 
 concurrency:
-  # One queue per branch or pull request; a newer push replaces a run that is
-  # still pending. Queue rather than cancel a running one: a cancelled job may
-  # leave bitbake running in the container, on the build directory the next
-  # run uses.
+  # One group per branch or pull request. On a pull request, a newer push
+  # cancels the run of the old commit, whose result no longer matters. The
+  # "Stop the build container" step below stops its bitbake, and the tasks it
+  # finished are in sstate. On main every push gets a complete run, so a newer
+  # one queues behind it.
   group: meta-swift-build-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   KAS_VERSION: "5.5"
