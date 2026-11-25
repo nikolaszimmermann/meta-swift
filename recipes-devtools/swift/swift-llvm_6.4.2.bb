@@ -150,10 +150,6 @@ do_install:append() {
     prefix=${D}${SWIFT_LLVM_PREFIX_INSTALL}
     # Swift relies on the private, generated config.h of LLVM.
     install -Dm 0644 ${B}/include/llvm/Config/config.h $prefix/include/llvm/Config/config.h
-    # The build host tools that swift-llvm for the SDK host and Swift run.
-    for t in llvm-tblgen llvm-min-tblgen clang-tblgen; do
-        [ -e $prefix/bin/$t ] || install -m 0755 ${B}/bin/$t $prefix/bin/
-    done
     # The fork installs the IndexStore headers below local/include.
     if [ -d $prefix/local/include/indexstore ]; then
         mv $prefix/local/include/indexstore $prefix/include/
@@ -172,6 +168,14 @@ do_install:append() {
         done
         find $dir -xtype l -delete
         find $dir -type d -empty -delete
+    done
+}
+
+# The build host tools that swift-llvm for the SDK host and Swift run. The
+# SDK host variant uses those of swift-llvm-native and does not build them.
+do_install:append:class-native() {
+    for t in llvm-tblgen llvm-min-tblgen clang-tblgen; do
+        [ -e ${D}${SWIFT_LLVM_PREFIX_INSTALL}/bin/$t ] || install -m 0755 ${B}/bin/$t ${D}${SWIFT_LLVM_PREFIX_INSTALL}/bin/
     done
 }
 
