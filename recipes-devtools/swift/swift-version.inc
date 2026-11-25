@@ -39,18 +39,22 @@ SWIFT_LIBDISPATCH_SRCDIR = "${SWIFT_UNPACKDIR}/swift-corelibs-libdispatch-${SWIF
 SWIFT_STRING_PROCESSING_SRCDIR = "${SWIFT_UNPACKDIR}/swift-experimental-string-processing-${SWIFT_TAG}"
 SWIFT_SYNTAX_SRCDIR = "${SWIFT_UNPACKDIR}/swift-syntax-${SWIFT_SYNTAX_VERSION}"
 
-# Swift recipes only make sense on top of the swiftlang LLVM fork.
+# The Swift recipes need conf/distro/include/swift-toolchain.inc.
 python () {
     if d.getVar('SWIFT_UNIFIED_LLVM') != '1':
         raise bb.parse.SkipRecipe('requires conf/distro/include/swift-toolchain.inc')
 }
 
-# Everything Swift is built by the (swiftlang) clang, in every class. Plain
-# TOOLCHAIN would lose against meta-clang's TOOLCHAIN:class-native = "gcc".
-TOOLCHAIN = "clang"
-TOOLCHAIN:class-native = "clang"
-TOOLCHAIN:class-nativesdk = "clang"
-# meta-clang only adds the clang toolchain dependency for target recipes.
-DEPENDS:append:class-native = " clang-native"
-# nooelint: oelint.vars.dependsclass - clang-crosssdk is not a native recipe
-DEPENDS:append:class-nativesdk = " clang-crosssdk-${SDK_SYS}"
+# Everything Swift is compiled by the private clang of the swiftlang fork
+# (swift-llvm), the clang that swiftc embeds, in every class. For the target
+# and the SDK host through the swiftclang toolchain
+# (conf/distro/include/swift-clang-toolchain.inc). The class overrides win
+# over the TOOLCHAIN:class-* = "gcc" of meta-clang. Native recipes compile
+# with BUILD_CC, which native.bbclass exports as CC.
+TOOLCHAIN:class-target = "swiftclang"
+TOOLCHAIN:class-nativesdk = "swiftclang"
+BUILD_CC:class-native = "${CCACHE}${SWIFT_LLVM_BINDIR}/clang ${BUILD_CC_ARCH}"
+BUILD_CXX:class-native = "${CCACHE}${SWIFT_LLVM_BINDIR}/clang++ ${BUILD_CC_ARCH}"
+BUILD_CPP:class-native = "${SWIFT_LLVM_BINDIR}/clang ${BUILD_CC_ARCH} -E"
+BUILD_CCLD:class-native = "${SWIFT_LLVM_BINDIR}/clang ${BUILD_CC_ARCH}"
+DEPENDS:append = " swift-llvm-native"

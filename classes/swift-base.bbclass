@@ -1,15 +1,28 @@
 # Compile Swift for the target with swift-native.
 #
-# The compiler and the C/C++ toolchain are the same swiftlang LLVM (see
-# conf/distro/include/swift-toolchain.inc), so swiftc's embedded clang finds the
-# Yocto sysroot, the gcc install and libstdc++ exactly like clang-cross does.
+# swiftc embeds the clang of the private swiftlang LLVM (swift-llvm), and the
+# C/C++ code of the recipe is compiled by that very clang: TOOLCHAIN =
+# "swiftclang" (conf/distro/include/swift-clang-toolchain.inc). So the
+# importer of swiftc and the C++ compiler agree, and both find the Yocto
+# sysroot, the gcc install and libstdc++ the same way.
 #
 # This class only sets up the compiler. Recipes that use the Swift standard
 # library should inherit swift (or swift-cmake), which also adds the runtime.
 
 inherit swift-triple
 
-TOOLCHAIN = "clang"
+TOOLCHAIN = "swiftclang"
+
+# A TOOLCHAIN set for a single recipe, such as TOOLCHAIN:pn-<recipe> = "clang"
+# in local.conf, would win over the class and mix two clangs.
+python () {
+    if bb.data.inherits_class('native', d):
+        return
+    if d.getVar('TOOLCHAIN') != 'swiftclang':
+        bb.fatal('%s inherits a Swift class, but TOOLCHAIN is "%s". Swift needs the '
+                 'swiftclang toolchain: remove the TOOLCHAIN setting for it.'
+                 % (d.getVar('PN'), d.getVar('TOOLCHAIN')))
+}
 
 DEPENDS:append:class-target = " swift-native"
 DEPENDS:append:class-nativesdk = " swift-native"
@@ -45,6 +58,7 @@ SWIFTFLAGS ?= "\
     -sdk ${STAGING_DIR_HOST} \
     -resource-dir ${SWIFT_RESOURCE_DIR} \
     -use-ld=lld \
+    -tools-directory ${SWIFT_LLVM_BINDIR} \
     ${SWIFT_DYLD_PREFIX_FLAGS} \
     ${@swift_xcc_flags(d)} \
     ${SWIFT_DEBUG_PREFIX_MAP} \
@@ -53,7 +67,8 @@ SWIFTFLAGS ?= "\
 # SDK host executables must be linked by ld.bfd of binutils-crosssdk: it
 # reserves room in the ELF interpreter path, which the SDK installer rewrites
 # when relocating the SDK (lld does not). The interpreter itself comes from
-# LDFLAGS (meta-clang's clang.bbclass), which the Swift link does not see.
+# LDFLAGS (conf/distro/include/swift-clang-toolchain.inc), which the Swift
+# link does not see.
 def swift_sdk_dynamic_linker_flags(d):
     import re
     # LDFLAGS may already be in swiftc form (swift-cmake-tool.bbclass).
@@ -64,6 +79,7 @@ def swift_sdk_dynamic_linker_flags(d):
 SWIFTFLAGS:class-native = "\
     -resource-dir ${SWIFT_RESOURCE_DIR} \
     -use-ld=lld \
+    -tools-directory ${SWIFT_LLVM_BINDIR} \
     ${@swift_xcc_flags(d)} \
     ${SWIFT_DEBUG_PREFIX_MAP} \
 "

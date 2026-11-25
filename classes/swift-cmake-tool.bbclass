@@ -12,8 +12,9 @@ EXTRA_OECMAKE:append = " -DCMAKE_POLICY_DEFAULT_CMP0157=NEW"
 # spelling nor the compile-time -f*-prefix-map flags that OE also puts into
 # LDFLAGS. Rewrite -Wl,a,b as -Xlinker a -Xlinker b, which clang and swiftc
 # both accept, and drop the prefix maps, which do nothing at link time. Also
-# drop -pthread (part of glibc) and meta-clang's explicit -rtlib=/--unwindlib=,
-# which only restate the defaults for these classes.
+# drop -pthread (part of glibc) and an explicit -rtlib=/--unwindlib=, which
+# distro settings for toolchain-clang may add and which only restate the
+# defaults for these classes.
 def swift_linker_neutral_ldflags(flags):
     import shlex
     out = []

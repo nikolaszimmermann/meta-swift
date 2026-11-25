@@ -1,7 +1,7 @@
 SUMMARY = "Swift programming language compiler"
 DESCRIPTION = "The Swift compiler (swiftc/swift-frontend) and its host standard \
-library, built by swift-stage3-native against the swiftlang LLVM fork that \
-also provides clang, lld and compiler-rt in this build."
+library, built by swift-stage3-native against the private LLVM of the swiftlang \
+fork (swift-llvm), which also provides the clang and lld it uses."
 
 require swift-compiler.inc
 
@@ -33,34 +33,34 @@ EXTRA_OECMAKE:append:class-native = " -DCMAKE_Swift_COMPILER=${SWIFT_BUILD_COMPI
 SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;stdlib;sdk-overlay;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib;license"
 
 # The SDK host compiler is cross-compiled: swift-native compiles its Swift
-# parts for the SDK host, clang-crosssdk its C++ parts, and it embeds (links)
-# the SDK host's clang, nativesdk-clang, i.e. the same swiftlang LLVM.
+# parts for the SDK host, the private clang (swiftclang toolchain) its C++
+# parts, and it embeds (links) nativesdk-swift-llvm, the same swiftlang LLVM.
 # Everything uses the SDK triple (${HOST_SYS}): clang only finds the SDK's
 # GCC installation for OE vendor triples. With swift-syntax enabled, Swift
 # forces BOOTSTRAPPING_MODE=HOSTTOOLS on Linux, so the compiler's Swift parts
 # are built against an existing runtime: the SDK host runtime from
 # nativesdk-swift-stdlib, which also ships it (SWIFT_PATH_TO_SWIFT_SDK and
 # -resource-dir point there instead of next to swift-native). CMake's own Swift compiler
-# check needs the runtime for the build host, so it is skipped. The installed
-# LLVM headers live in the system include directory of the SDK sysroot,
-# which must not become a -I for Swift (0004). SDK host executables are
-# linked by ld.bfd, which keeps them relocatable (see swift-base.bbclass).
+# check needs the runtime for the build host, so it is skipped. The system
+# include directory of the SDK sysroot must not become a -I for Swift (0004).
+# SDK host executables are linked by ld.bfd, which keeps them relocatable
+# (see swift-base.bbclass).
 SRC_URI:append:class-nativesdk = " \
     file://0004-cmake-Do-not-add-system-include-directories-of-an-in.patch \
     file://0005-SwiftCompilerSources-Use-SwiftShims-from-SWIFT_PATH_.patch \
 "
 SWIFT_INSTALL_COMPONENTS:class-nativesdk = "autolink-driver;compiler;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib"
 # nooelint: oelint.var.order.DEPENDS - with the other SDK host settings
-DEPENDS:append:class-nativesdk = " swift-native nativesdk-swift-stdlib nativesdk-clang nativesdk-libdispatch nativesdk-libxml2 nativesdk-zlib nativesdk-ncurses nativesdk-libedit nativesdk-util-linux"
-SWIFT_LLVM_PREFIX:class-nativesdk = "${STAGING_DIR_HOST}${prefix}"
+DEPENDS:append:class-nativesdk = " swift-native nativesdk-swift-stdlib nativesdk-swift-llvm nativesdk-libdispatch nativesdk-libxml2 nativesdk-zlib nativesdk-ncurses nativesdk-libedit nativesdk-util-linux"
+SWIFT_LLVM_PREFIX:class-nativesdk = "${STAGING_DIR_HOST}${libexecdir}/swift-llvm"
 EXTRA_OECMAKE:remove:class-nativesdk = "\
     -DCMAKE_LINKER_TYPE=LLD \
     -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
     -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
 "
 EXTRA_OECMAKE:append:class-nativesdk = "\
-    -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
-    -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
+    -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_BINDIR} \
+    -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_BINDIR} \
     -DSWIFT_NATIVE_SWIFT_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
     -DCMAKE_Swift_COMPILER=${STAGING_BINDIR_NATIVE}/swiftc \
     -DCMAKE_Swift_COMPILER_TARGET=${HOST_SYS} \
@@ -74,7 +74,7 @@ EXTRA_OECMAKE:append:class-nativesdk = "\
     -DSWIFT_PATH_TO_SWIFT_SDK=${STAGING_DIR_HOST} \
     -DSWIFT_COMPILER_SOURCES_SDK_FLAGS='-sdk;${STAGING_DIR_HOST};-resource-dir;${STAGING_LIBDIR}/swift' \
     -DSWIFT_BUILD_SDK_OVERLAY=OFF \
-    -DLLVM_TABLEGEN=${STAGING_BINDIR_NATIVE}/llvm-tblgen \
+    -DLLVM_TABLEGEN=${SWIFT_LLVM_BINDIR}/llvm-tblgen \
     -DSWIFT_HOST_VARIANT_SDK=LINUX \
     -DSWIFT_HOST_VARIANT_ARCH=${HOST_ARCH} \
     -Ddispatch_DIR=${STAGING_LIBDIR}/cmake/dispatch \

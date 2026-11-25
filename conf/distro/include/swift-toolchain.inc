@@ -1,10 +1,12 @@
 # Opt-in for the Swift toolchain.
 #
-# Including this file makes the swiftlang LLVM fork the one LLVM/clang of the
-# build: the meta-clang (or OE-core) clang recipes keep doing all the work but
-# build from swiftlang/llvm-project at the tag that matches SWIFT_VERSION, with
-# the OE patch series rebased onto it. swiftc embeds that very clang, so the C,
-# C++ and Swift compilers, lld and the clang resource headers all agree.
+# The Swift compiler embeds clang, and the C/C++ code it imports or links
+# against must be compiled by that very clang. This layer builds it from the
+# swiftlang LLVM fork at the tag that matches SWIFT_VERSION, as a private
+# toolchain under its own prefix (the swift-llvm recipe). Only the recipes
+# that inherit the Swift classes and the Swift recipes themselves use it, with
+# TOOLCHAIN = "swiftclang". Every other recipe keeps the compiler and the LLVM
+# of the distro, unchanged.
 #
 # Only including the layer changes nothing. The Swift recipes are skipped until
 # this file is included, e.g. from local.conf or a distro configuration:
@@ -14,5 +16,4 @@
 SWIFT_UNIFIED_LLVM = "1"
 OVERRIDES .= ":swiftllvm"
 
-# Ship the (now swiftlang) clang in the SDK, next to swiftc.
-CLANGSDK = "1"
+require conf/distro/include/swift-clang-toolchain.inc
