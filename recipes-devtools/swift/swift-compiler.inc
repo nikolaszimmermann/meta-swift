@@ -108,6 +108,11 @@ EXTRA_OECMAKE = "\
     -DSWIFT_INSTALL_COMPONENTS='${SWIFT_INSTALL_COMPONENTS}' \
 "
 
+# CMake honours CMAKE_LINKER_TYPE from 3.29 on (scarthgap has 3.28, wrynose
+# 4.x). LLVM then adds lld-only flags to the linker flags, which reach the
+# libdispatch sub-build, and that one links with the default linker.
+EXTRA_OECMAKE:remove = "${@'-DCMAKE_LINKER_TYPE=LLD' if 'wrynose' in (d.getVar('LAYERSERIES_CORENAMES') or '').split() else ''}"
+
 # Swift links lib/swift{,_static}/clang to the clang resource directory it
 # found at configure time, as an absolute path. Make it relative so the
 # sysroot stays relocatable.
