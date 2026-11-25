@@ -50,6 +50,11 @@ env:
 local_conf_header:
   meta-swift: |
     require conf/distro/include/swift-toolchain.inc
+  # The kas container runs Debian 13, which scarthgap predates and does not
+  # list as a tested host. The CI builds on it fine, so add it and avoid the
+  # warning in every build.
+  scarthgap-host: |
+    SANITY_TESTED_DISTROS:append = " \n debian-13 \n"
   ci: |
     INHERIT += "rm_work"
     BB_DISKMON_DIRS = "\
