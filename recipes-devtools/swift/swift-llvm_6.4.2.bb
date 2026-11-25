@@ -179,6 +179,12 @@ do_install:append:class-native() {
     done
 }
 
+# sstate replaces the build paths in files that match SSTATE_SCAN_FILES with
+# sed. That includes *-config, and llvm-config is a binary: the replacement
+# changes its length and breaks it, and the SDK installer then fails to
+# relocate it. meta-clang does the same.
+SSTATE_SCAN_FILES:remove = "*-config"
+
 # Only the build host variant is staged with libexec by default. Swift for the
 # SDK host builds against the SDK host variant.
 SYSROOT_DIRS:append:class-nativesdk = " ${SWIFT_LLVM_PREFIX_INSTALL}"
