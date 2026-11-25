@@ -3,7 +3,8 @@
 # CMAKE_Swift_FLAGS). C and C++ code that Swift imports or links against must
 # be compiled by the clang that swiftc embeds: the private clang of
 # nativesdk-swift-llvm, which SWIFT_CLANGCC, SWIFT_CLANGCXX and SWIFT_CLANGCPP
-# describe. CC and CXX stay the compilers of the distro.
+# describe. CC and CXX stay the compilers of the distro. SWIFT_CLANGCXX also
+# finds the C++ interop support headers of the runtime, like swift-base.
 inherit swift-triple
 
 SWIFTSDK ??= "1"
@@ -31,7 +32,7 @@ create_sdk_files:append:swiftllvm() {
         echo 'export SWIFT_TARGET="${SWIFT_SDK_TARGET}"' >> $script
         echo 'export SWIFTFLAGS="-no-toolchain-stdlib-rpath -sdk $SDKTARGETSYSROOT -resource-dir $SDKTARGETSYSROOT${libdir}/swift -use-ld=lld -tools-directory ${SWIFT_SDK_CLANG} ${SWIFT_SDK_DYLD_PREFIX_FLAGS} ${@swift_xcc_flags(d)}"' >> $script
         echo 'export SWIFT_CLANGCC="${SWIFT_SDK_CLANG}/clang -target ${TARGET_SYS} ${SWIFT_SDK_CLANGCC_ARCH} --sysroot=$SDKTARGETSYSROOT"' >> $script
-        echo 'export SWIFT_CLANGCXX="${SWIFT_SDK_CLANG}/clang++ -target ${TARGET_SYS} ${SWIFT_SDK_CLANGCC_ARCH} --sysroot=$SDKTARGETSYSROOT"' >> $script
+        echo 'export SWIFT_CLANGCXX="${SWIFT_SDK_CLANG}/clang++ -target ${TARGET_SYS} ${SWIFT_SDK_CLANGCC_ARCH} --sysroot=$SDKTARGETSYSROOT -idirafter $SDKTARGETSYSROOT${libdir}/swift"' >> $script
         echo 'export SWIFT_CLANGCPP="${SWIFT_SDK_CLANG}/clang -E -target ${TARGET_SYS} ${SWIFT_SDK_CLANGCC_ARCH} --sysroot=$SDKTARGETSYSROOT"' >> $script
     fi
 }

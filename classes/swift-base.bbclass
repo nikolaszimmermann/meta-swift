@@ -85,6 +85,16 @@ SWIFTFLAGS:class-native = "\
 SWIFTFLAGS:remove:class-nativesdk = "-use-ld=lld"
 SWIFTFLAGS:append:class-nativesdk = " -use-ld=bfd ${@swift_sdk_dynamic_linker_flags(d)}"
 
+# The C++ headers that swiftc generates for Swift code include the C++ interop
+# support headers (swiftToCxx). They look for them in the include path first,
+# then relative to the clang resource directory, where a Swift toolchain has
+# them. The private clang has its resource directory in its own prefix, so
+# add the swiftToCxx headers of the runtime in the sysroot to the include
+# path, last, so that they can not shadow other headers.
+SWIFT_CXX_INTEROP_INCLUDES = "-idirafter ${STAGING_LIBDIR}/swift"
+SWIFT_CXX_INTEROP_INCLUDES:class-native = "-idirafter ${STAGING_LIBDIR_NATIVE}/swift"
+CXXFLAGS:append = " ${SWIFT_CXX_INTEROP_INCLUDES}"
+
 # Libraries built with Swift depend on the Swift runtime, which is not in the
 # default library path: let the linker find it when linking their users.
 TARGET_LDFLAGS:append:class-target = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/linux"
