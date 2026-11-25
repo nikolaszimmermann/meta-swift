@@ -38,6 +38,27 @@ EXTRA_OECMAKE = "\
     -DSwiftFoundation_MACRO=${STAGING_LIBDIR_NATIVE}/swift/host/plugins \
 "
 
+# Foundation builds from several source trees next to each other, but the
+# prefix maps of OE (DEBUG_PREFIX_MAP) and of the Swift classes only cover
+# ${S}. Map the others too, each to its own directory below
+# TARGET_DBGSRC_DIR, so that the debug information has no build paths.
+SWIFT_FOUNDATION_EXTRA_SRCDIRS = "\
+    ${SWIFT_UNPACKDIR}/swift-foundation-${SWIFT_TAG} \
+    ${SWIFT_UNPACKDIR}/swift-foundation-icu-${SWIFT_TAG} \
+    ${SWIFT_UNPACKDIR}/swift-collections-1.1.6 \
+    ${SWIFT_SYNTAX_SRCDIR} \
+"
+def swift_foundation_prefix_maps(d, opts):
+    import os
+    dbgsrc = d.getVar('TARGET_DBGSRC_DIR')
+    maps = []
+    for srcdir in d.getVar('SWIFT_FOUNDATION_EXTRA_SRCDIRS').split():
+        for opt in opts.split(';'):
+            maps.append(opt % ('%s=%s/%s' % (srcdir, dbgsrc, os.path.basename(srcdir))))
+    return ' '.join(maps)
+DEBUG_PREFIX_MAP:append = " ${@swift_foundation_prefix_maps(d, '-fdebug-prefix-map=%s;-fmacro-prefix-map=%s')}"
+SWIFT_DEBUG_PREFIX_MAP:append = " ${@swift_foundation_prefix_maps(d, '-file-prefix-map %s')}"
+
 FILES:${PN} = "${libdir}/swift/linux/lib*${SOLIBSDEV}"
 # Everything but the runtime libraries: modules, module maps and headers.
 FILES:${PN}-dev = "\
