@@ -25,7 +25,7 @@ done
 
 # The programs stay in the build directory, outside the SDK: the swift_sdk
 # runtime test runs hello in QEMU (SWIFT_SDK_TEST_PROGRAM in
-# ci/kas/scarthgap.yml).
+# ci/kas/common.yml).
 programs=$build/sdk-test-programs
 rm -rf "$programs"
 mkdir -p "$programs"

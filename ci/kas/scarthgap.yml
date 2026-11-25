@@ -6,20 +6,10 @@
 
 header:
   version: 14
-
-distro: poky
-target:
-  - swift-cxx-interop-test
-  # The SDK, with the Swift compiler for the SDK host (nativesdk-swift).
-  # ci/test-sdk.sh then compiles a program with it.
-  - core-image-minimal:do_populate_sdk
-  # The image the CI boots in QEMU for the runtime tests (testimage).
-  - core-image-minimal
+  includes:
+    - ci/kas/common.yml
 
 repos:
-  # This repository; the layer is at its root.
-  meta-swift:
-
   poky:
     url: https://git.yoctoproject.org/poky
     branch: scarthgap
@@ -33,58 +23,15 @@ repos:
     branch: scarthgap-clang20
     commit: f26bab34e6c208149fe1ad04521864b663489f4d
 
-# Several LLVM builds (swift-llvm-native, nativesdk-swift-llvm,
-# swift-bootstrap-llvm-native) compile at the same time, at up to 2 GB per C++
-# compiler process. With the bitbake defaults (one task and one make job per
-# CPU) a 40-CPU runner with 64 GB of RAM ran out of memory. These defaults fit
-# that runner.
-# A smaller one sets META_SWIFT_BB_NUMBER_THREADS and META_SWIFT_PARALLEL_MAKE
-# in the .env file of the runner, see .github/workflows/build.yml.
 env:
-  BB_NUMBER_THREADS: "8"
-  PARALLEL_MAKE: "-j16"
   # Recipes whose task hashes must not change when the Swift toolchain is
   # enabled, see ci/check-isolation.sh: some that use the distro compiler and
   # the clang of meta-clang itself.
   SWIFT_ISOLATION_TARGETS: "glib-2.0 gtk4 mesa gstreamer1.0 clang"
 
 local_conf_header:
-  meta-swift: |
-    require conf/distro/include/swift-toolchain.inc
   # The kas container runs Debian 13, which scarthgap predates and does not
   # list as a tested host. The CI builds on it fine, so add it and avoid the
   # warning in every build.
   scarthgap-host: |
     SANITY_TESTED_DISTROS:append = " \n debian-13 \n"
-  ci: |
-    INHERIT += "rm_work"
-    BB_DISKMON_DIRS = "\
-        STOPTASKS,${TMPDIR},1G,100K \
-        STOPTASKS,${DL_DIR},1G,100K \
-        STOPTASKS,${SSTATE_DIR},1G,100K \
-        HALT,${TMPDIR},100M,1K \
-        HALT,${DL_DIR},100M,1K \
-        HALT,${SSTATE_DIR},100M,1K"
-  # The runtime tests of the CI: bitbake core-image-minimal -c testimage
-  # boots the image in QEMU, logs in over ssh and runs the ptest of
-  # swift-cxx-interop-test, then the program that ci/test-sdk.sh compiled
-  # with the SDK. slirp networking needs no root rights and no tap devices.
-  # scp in the kas container uses the SFTP protocol, hence openssh with its
-  # sftp-server instead of dropbear. rm_work would remove the work directory
-  # of the image once the image is built, while do_populate_sdk of the same
-  # recipe may still install from the package repository in it.
-  qemu-test: |
-    IMAGE_CLASSES += "testimage"
-    RM_WORK_EXCLUDE += "core-image-minimal"
-    IMAGE_FEATURES:append:pn-core-image-minimal = " ssh-server-openssh allow-empty-password empty-root-password allow-root-login"
-    IMAGE_INSTALL:append:pn-core-image-minimal = " openssh-sftp-server ptest-runner swift-cxx-interop-test-ptest swift-foundation"
-    TEST_SUITES = "ping ssh ptest swift_sdk"
-    TEST_RUNQEMUPARAMS = "slirp nographic"
-    # testimage uses KVM for an x86 image on an x86 host, but the runners
-    # are not expected to provide /dev/kvm. QEMU always emulates.
-    QEMU_USE_KVM = "0"
-    QB_MEM = "-m 1024"
-    SWIFT_SDK_TEST_PROGRAM = "${TOPDIR}/sdk-test-programs/hello"
-    # testimage reads the variables from the testdata.json of the image, which
-    # is only written when the image is built. Take the current value.
-    TESTIMAGE_UPDATE_VARS:append = " SWIFT_SDK_TEST_PROGRAM"

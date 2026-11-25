@@ -47,6 +47,9 @@ jobs:
           - scarthgap-qemuarm64
           - scarthgap-qemuarm
           - scarthgap-qemux86-64
+          - wrynose-qemuarm64
+          - wrynose-qemuarm
+          - wrynose-qemux86-64
     steps:
       - uses: actions/checkout@v7
 
