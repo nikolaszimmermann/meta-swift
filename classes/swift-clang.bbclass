@@ -16,6 +16,12 @@ BUILD_CCLD:class-native = "${SWIFT_LLVM_BINDIR}/clang ${BUILD_CC_ARCH}"
 
 DEPENDS:append = " swift-llvm-native"
 
+# swiftc links through clang, which it looks up next to itself and in PATH,
+# unless -tools-directory says otherwise. Builds that run swiftc directly, such
+# as the bootstrap stages and their CMake checks, find the private clang and
+# lld here.
+PATH:prepend = "${SWIFT_LLVM_BINDIR}:"
+
 # The private clang of an SDK host recipe gets --sysroot=${STAGING_DIR_HOST},
 # but the SDK host libraries, headers, crt files and libgcc are staged below
 # ${SDKPATHNATIVE} in there. Like nativesdk-clang-glue of meta-clang, link
