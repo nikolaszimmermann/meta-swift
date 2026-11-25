@@ -9,12 +9,10 @@
 # This class only sets up the compiler. Recipes that use the Swift standard
 # library should inherit swift (or swift-cmake), which also adds the runtime.
 
-inherit swift-triple
-
-TOOLCHAIN = "swiftclang"
+inherit swift-triple swift-clang
 
 # A TOOLCHAIN set for a single recipe, such as TOOLCHAIN:pn-<recipe> = "clang"
-# in local.conf, would win over the class and mix two clangs.
+# in local.conf, would win over swift-clang and mix two clangs.
 python () {
     if bb.data.inherits_class('native', d):
         return

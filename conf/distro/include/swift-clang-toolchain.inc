@@ -37,10 +37,12 @@ DEBUG_PREFIX_MAP:remove:toolchain-swiftclang = "-fcanon-prefix-map"
 # The rest of what meta-clang (classes/clang.bbclass) sets for
 # toolchain-clang, for the architectures this layer supports.
 #
-# clang does not know the big.LITTLE tunes of gcc: use the LITTLE core. And
-# work around https://github.com/llvm/llvm-project/issues/85699 for the
-# 64-bit rpi3 and rpi4 tunes.
-TUNE_CCARGS:remove:toolchain-swiftclang = "\
+# clang does not know the big.LITTLE tunes of gcc: use the LITTLE core. The
+# dynamic loader is in /usr/lib on usrmerge systems. Silence the warnings
+# about arguments that clang does not use in a given step. The SDK
+# environment (meta-environment.bbappend) applies the same to the tune flags
+# of its clang.
+SWIFT_CLANG_TUNE_REMOVE = "\
     -mcpu=cortex-a57.cortex-a53${TUNE_CCARGS_MARCH_OPTS} \
     -mcpu=cortex-a72.cortex-a53${TUNE_CCARGS_MARCH_OPTS} \
     -mcpu=cortex-a15.cortex-a7${TUNE_CCARGS_MARCH_OPTS} \
@@ -48,17 +50,21 @@ TUNE_CCARGS:remove:toolchain-swiftclang = "\
     -mcpu=cortex-a72.cortex-a35${TUNE_CCARGS_MARCH_OPTS} \
     -mcpu=cortex-a73.cortex-a53${TUNE_CCARGS_MARCH_OPTS} \
     -mcpu=cortex-a75.cortex-a55${TUNE_CCARGS_MARCH_OPTS} \
-    -mcpu=cortex-a76.cortex-a55${TUNE_CCARGS_MARCH_OPTS}"
-TUNE_CCARGS:append:toolchain-swiftclang = "${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa72-cortexa53 cortexa57-cortexa53 cortexa73-cortexa53', ' -mcpu=cortex-a53${TUNE_CCARGS_MARCH_OPTS}', '', d)}"
-TUNE_CCARGS:append:toolchain-swiftclang = "${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa15-cortexa7 cortexa17-cortexa7', ' -mcpu=cortex-a7${TUNE_CCARGS_MARCH_OPTS}', '', d)}"
-TUNE_CCARGS:append:toolchain-swiftclang = "${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa72-cortexa35', ' -mcpu=cortex-a35${TUNE_CCARGS_MARCH_OPTS}', '', d)}"
-TUNE_CCARGS:append:toolchain-swiftclang = "${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa75-cortexa55 cortexa76-cortexa55', ' -mcpu=cortex-a55${TUNE_CCARGS_MARCH_OPTS}', '', d)}"
+    -mcpu=cortex-a76.cortex-a55${TUNE_CCARGS_MARCH_OPTS} \
+"
+SWIFT_CLANG_TUNE_APPEND = "\
+    ${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa72-cortexa53 cortexa57-cortexa53 cortexa73-cortexa53', '-mcpu=cortex-a53${TUNE_CCARGS_MARCH_OPTS}', '', d)} \
+    ${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa15-cortexa7 cortexa17-cortexa7', '-mcpu=cortex-a7${TUNE_CCARGS_MARCH_OPTS}', '', d)} \
+    ${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa72-cortexa35', '-mcpu=cortex-a35${TUNE_CCARGS_MARCH_OPTS}', '', d)} \
+    ${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa75-cortexa55 cortexa76-cortexa55', '-mcpu=cortex-a55${TUNE_CCARGS_MARCH_OPTS}', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '--dyld-prefix=/usr', '', d)} \
+    -Qunused-arguments \
+"
+TUNE_CCARGS:remove:toolchain-swiftclang = "${SWIFT_CLANG_TUNE_REMOVE}"
+TUNE_CCARGS:append:toolchain-swiftclang = " ${SWIFT_CLANG_TUNE_APPEND}"
+# Work around https://github.com/llvm/llvm-project/issues/85699 for the
+# 64-bit rpi3 and rpi4 tunes.
 TUNE_CCARGS_MARCH_OPTS:append:toolchain-swiftclang = "${@bb.utils.contains_any('DEFAULTTUNE', 'cortexa72 cortexa53', '+nocrypto', '', d)}"
-
-# The dynamic loader is in /usr/lib on usrmerge systems. Silence the warnings
-# about arguments that clang does not use in a given step.
-TUNE_CCARGS:append:toolchain-swiftclang = "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', ' --dyld-prefix=/usr', '', d)}"
-TUNE_CCARGS:append:toolchain-swiftclang = " -Qunused-arguments"
 
 # SDK host binaries: clang does not know the loader of the SDK, gcc-crosssdk
 # has it built in.

@@ -159,19 +159,39 @@ do_install:append() {
         mv $prefix/local/include/indexstore $prefix/include/
         rm -rf $prefix/local
     fi
+    # Drop the perl and python scripts of the analyzer (scan-build,
+    # scan-view, intercept-build) and the clang-format helpers. Swift does not
+    # use them, and they would need perl and python in the SDK.
+    rm -rf $prefix/lib/libear $prefix/lib/libscanbuild $prefix/libexec
+    for dir in $prefix/bin $prefix/share; do
+        [ -d $dir ] || continue
+        find $dir -type f | while read -r f; do
+            if [ "$(head -c 2 "$f")" = "#!" ]; then
+                rm "$f"
+            fi
+        done
+        find $dir -xtype l -delete
+        find $dir -type d -empty -delete
+    done
 }
 
-# Only the SDK host variant is packaged: the clang, lld and resource headers
-# for the SDK, the libraries and headers for building against it.
+# Only the build host variant is staged with libexec by default. Swift for the
+# SDK host builds against the SDK host variant.
+SYSROOT_DIRS:append:class-nativesdk = " ${SWIFT_LLVM_PREFIX_INSTALL}"
+
+# Only the SDK host variant is packaged: the clang, lld, resource headers and
+# shared libraries (libclang, libLTO, libRemarks) for the SDK, the headers,
+# CMake packages and static libraries for building against it.
 FILES:${PN} = "\
     ${SWIFT_LLVM_PREFIX_INSTALL}/bin \
     ${SWIFT_LLVM_PREFIX_INSTALL}/lib/clang \
+    ${SWIFT_LLVM_PREFIX_INSTALL}/lib/*${SOLIBS} \
     ${SWIFT_LLVM_PREFIX_INSTALL}/share \
 "
 FILES:${PN}-dev = "\
     ${SWIFT_LLVM_PREFIX_INSTALL}/include \
     ${SWIFT_LLVM_PREFIX_INSTALL}/lib/cmake \
-    ${SWIFT_LLVM_PREFIX_INSTALL}/libexec \
+    ${SWIFT_LLVM_PREFIX_INSTALL}/lib/*${SOLIBSDEV} \
 "
 FILES:${PN}-staticdev = "${SWIFT_LLVM_PREFIX_INSTALL}/lib/*.a"
 

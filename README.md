@@ -162,6 +162,7 @@ Inherit one class. The others come with it.
 | `swift-base`       | `swiftc` only, without the runtime.                                 |
 | `swift-cmake-tool` | Part of `swift-cmake`: CMake 3.31 of this layer, with policy CMP0157 and linker flags that `swiftc` accepts. |
 | `swift-triple`     | Part of `swift-base`: the Swift triple and the tune flags.          |
+| `swift-clang`      | Part of `swift-base`: C and C++ with the private clang, in every class. |
 
 `swift-cmake` sets `CMAKE_Swift_COMPILER`, the target triple and the sysroot
 in the generated CMake toolchain file. The other classes provide `SWIFTC`,

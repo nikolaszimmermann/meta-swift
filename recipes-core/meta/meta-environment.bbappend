@@ -13,10 +13,15 @@ SWIFTSDK ??= "1"
 SWIFT_SDK_TARGET = "${@oe.utils.conditional('TARGET_ARCH', 'arm', d.getVar('TARGET_SYS').replace('arm-', 'armv7-', 1) + 'hf', d.getVar('TARGET_SYS'), d)}"
 SWIFT_SDK_DYLD_PREFIX_FLAGS = "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-Xclang-linker --dyld-prefix=/usr', '', d)}"
 
-# The tune flags of gcc that clang does not take, like meta-clang does for its
-# CLANGCC.
-SWIFT_SDK_CLANGCC_ARCH = "${TARGET_CC_ARCH}${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', ' --dyld-prefix=/usr', '', d)}"
-SWIFT_SDK_CLANGCC_ARCH:remove = "-mthumb-interwork -mmusl -muclibc -meb -mel"
+# The tune flags for clang: without the gcc flags that clang does not take,
+# like meta-clang does for its CLANGCC, and with the changes that the
+# swiftclang toolchain makes (conf/distro/include/swift-clang-toolchain.inc).
+# meta-environment itself is not built with that toolchain. The tune flags
+# that swiftc passes to its clang (SWIFT_TUNE_CCARGS) get the same.
+SWIFT_SDK_CLANGCC_ARCH = "${TARGET_CC_ARCH} ${SWIFT_CLANG_TUNE_APPEND}"
+SWIFT_SDK_CLANGCC_ARCH:remove = "-mthumb-interwork -mmusl -muclibc -meb -mel ${SWIFT_CLANG_TUNE_REMOVE}"
+SWIFT_TUNE_CCARGS:append = " ${SWIFT_CLANG_TUNE_APPEND}"
+SWIFT_TUNE_CCARGS:remove = "${SWIFT_CLANG_TUNE_REMOVE}"
 SWIFT_SDK_CLANG = "$OECORE_NATIVE_SYSROOT${prefix_nativesdk}/libexec/swift-llvm/bin"
 
 create_sdk_files:append:swiftllvm() {
