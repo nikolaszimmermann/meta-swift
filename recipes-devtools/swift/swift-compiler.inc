@@ -53,7 +53,10 @@ SWIFT_STAGE_PREFIX ?= "${prefix}"
 # swift-llvm-native, the swiftlang fork of SWIFT_VERSION.
 SWIFT_LLVM_PREFIX ?= "${SWIFT_LLVM_PREFIX_NATIVE}"
 
-# cmark is a build-time only dependency of the compiler (doc comments).
+# cmark is a build-time only dependency of the compiler (doc comments). The
+# target triple and the sysroot are not part of the compiler and CFLAGS, but of
+# HOST_CC_ARCH and TOOLCHAIN_OPTIONS, which CMake gets like the cmake class
+# passes them.
 SWIFT_CMARK_BUILDDIR = "${WORKDIR}/build-cmark"
 
 do_configure:prepend() {
@@ -61,8 +64,8 @@ do_configure:prepend() {
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_COMPILER="${OECMAKE_C_COMPILER}" \
         -DCMAKE_CXX_COMPILER="${OECMAKE_CXX_COMPILER}" \
-        -DCMAKE_C_FLAGS="${CFLAGS}" \
-        -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
+        -DCMAKE_C_FLAGS="${HOST_CC_ARCH}${TOOLCHAIN_OPTIONS} ${CFLAGS}" \
+        -DCMAKE_CXX_FLAGS="${HOST_CC_ARCH}${TOOLCHAIN_OPTIONS} ${CXXFLAGS}" \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DCMARK_TESTS=OFF \
         -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \

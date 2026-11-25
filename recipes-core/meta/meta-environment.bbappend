@@ -19,10 +19,15 @@ SWIFT_SDK_DYLD_PREFIX_FLAGS = "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge
 # swiftclang toolchain makes (conf/distro/include/swift-clang-toolchain.inc).
 # meta-environment itself is not built with that toolchain. The tune flags
 # that swiftc passes to its clang (SWIFT_TUNE_CCARGS) get the same.
-SWIFT_SDK_CLANGCC_ARCH = "${TARGET_CC_ARCH} ${SWIFT_CLANG_TUNE_APPEND}"
-SWIFT_SDK_CLANGCC_ARCH:remove = "-mthumb-interwork -mmusl -muclibc -meb -mel ${SWIFT_CLANG_TUNE_REMOVE}"
-SWIFT_TUNE_CCARGS:append = " ${SWIFT_CLANG_TUNE_APPEND}"
-SWIFT_TUNE_CCARGS:remove = "${SWIFT_CLANG_TUNE_REMOVE}"
+def swift_sdk_clang_flags(d, var):
+    remove = set(['-mthumb-interwork', '-mmusl', '-muclibc', '-meb', '-mel'])
+    remove.update((d.getVar('SWIFT_CLANG_TUNE_REMOVE') or '').split())
+    flags = [f for f in (d.getVar(var) or '').split() if f not in remove]
+    flags += (d.getVar('SWIFT_CLANG_TUNE_APPEND') or '').split()
+    suffix = d.getVar('SWIFT_CLANG_MARCH_OPTS_APPEND') or ''
+    return ' '.join(f + suffix if f.startswith('-mcpu=') else f for f in flags)
+SWIFT_SDK_CLANGCC_ARCH = "${@swift_sdk_clang_flags(d, 'TARGET_CC_ARCH')}"
+SWIFT_TUNE_CCARGS = "${@swift_sdk_clang_flags(d, 'TUNE_CCARGS')}"
 SWIFT_SDK_CLANG = "$OECORE_NATIVE_SYSROOT${prefix_nativesdk}/libexec/swift-llvm/bin"
 
 create_sdk_files:append:swiftllvm() {

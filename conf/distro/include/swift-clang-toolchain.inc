@@ -64,7 +64,8 @@ TUNE_CCARGS:remove:toolchain-swiftclang = "${SWIFT_CLANG_TUNE_REMOVE}"
 TUNE_CCARGS:append:toolchain-swiftclang = " ${SWIFT_CLANG_TUNE_APPEND}"
 # Work around https://github.com/llvm/llvm-project/issues/85699 for the
 # 64-bit rpi3 and rpi4 tunes.
-TUNE_CCARGS_MARCH_OPTS:append:toolchain-swiftclang = "${@bb.utils.contains_any('DEFAULTTUNE', 'cortexa72 cortexa53', '+nocrypto', '', d)}"
+SWIFT_CLANG_MARCH_OPTS_APPEND = "${@bb.utils.contains_any('DEFAULTTUNE', 'cortexa72 cortexa53', '+nocrypto', '', d)}"
+TUNE_CCARGS_MARCH_OPTS:append:toolchain-swiftclang = "${SWIFT_CLANG_MARCH_OPTS_APPEND}"
 
 # SDK host binaries: clang does not know the loader of the SDK, gcc-crosssdk
 # has it built in.

@@ -105,7 +105,7 @@ EXTRA_OECMAKE:append:class-nativesdk = "\
 # anchors). Like meta-clang, but a native recipe only sees its own
 # TARGET_VENDOR, so take the target vendor from SDK_VENDOR: the vendor of the
 # distro is the one of its SDK without the "sdk" suffix (-poky, -pokysdk).
-SWIFT_LLVM_OE_VENDORS ?= "${@(d.getVar('SDK_VENDOR') or '').removesuffix('sdk')} ${SDK_VENDOR}"
+SWIFT_LLVM_OE_VENDORS ?= "${@(lambda v: v[:-3] if v.endswith('sdk') else v)(d.getVar('SDK_VENDOR') or '')} ${SDK_VENDOR}"
 SWIFT_LLVM_OE_DISTRO ?= "poky:poky"
 SWIFT_LLVM_MULTILIB_VARIANTS = "lib32 lib64 libx32"
 
@@ -145,6 +145,9 @@ python do_preconfigure() {
     sed('//CLANG_EXTRA_OE_DISTRO_CASES', case, '${S}/clang/lib/Driver/Distro.cpp')
 }
 addtask preconfigure after do_patch before do_configure
+# do_preconfigure replaces the anchors, so it only works on a fresh source
+# tree. Unpack again when it or the names change.
+do_unpack[vardeps] += "do_preconfigure"
 
 do_install:append() {
     prefix=${D}${SWIFT_LLVM_PREFIX_INSTALL}
