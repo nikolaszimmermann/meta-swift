@@ -14,7 +14,7 @@ untouched.
 | --------------- | --------------------------------------------------- |
 | Swift           | 6.4.2                                               |
 | LLVM            | 21.1, [swiftlang/llvm-project](https://github.com/swiftlang/llvm-project) |
-| Yocto releases  | scarthgap (built and tested), wrynose (in progress) |
+| Yocto releases  | scarthgap, wrynose (built and tested)               |
 | Targets         | aarch64, armv7 (hard-float), x86_64                 |
 | Build/SDK hosts | x86_64, aarch64                                     |
 
@@ -190,7 +190,7 @@ SDK.
 | Release   | Status           |
 | --------- | ---------------- |
 | scarthgap | built and tested |
-| wrynose   | in progress      |
+| wrynose   | built and tested |
 
 Both are LTS releases. The layer does not support the short-lived stable
 releases in between.
