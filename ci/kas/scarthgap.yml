@@ -84,4 +84,4 @@ local_conf_header:
     # are not expected to provide /dev/kvm. QEMU always emulates.
     QEMU_USE_KVM = "0"
     QB_MEM = "-m 1024"
-    SWIFT_SDK_TEST_PROGRAM = "${TOPDIR}/sdk-test/hello"
+    SWIFT_SDK_TEST_PROGRAM = "${TOPDIR}/sdk-test-programs/hello"
