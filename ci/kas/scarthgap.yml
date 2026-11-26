@@ -33,19 +33,29 @@ repos:
     branch: scarthgap-clang20
     commit: f26bab34e6c208149fe1ad04521864b663489f4d
 
-# Several LLVM builds (clang-native, swift-bootstrap-llvm-native, the cross
-# clang) compile at the same time, at up to 2 GB per C++ compiler process.
-# With the bitbake defaults (one task and one make job per CPU) a 40-CPU
-# runner with 64 GB of RAM ran out of memory. These defaults fit that runner.
+# Several LLVM builds (swift-llvm-native, nativesdk-swift-llvm,
+# swift-bootstrap-llvm-native) compile at the same time, at up to 2 GB per C++
+# compiler process. With the bitbake defaults (one task and one make job per
+# CPU) a 40-CPU runner with 64 GB of RAM ran out of memory. These defaults fit
+# that runner.
 # A smaller one sets META_SWIFT_BB_NUMBER_THREADS and META_SWIFT_PARALLEL_MAKE
 # in the .env file of the runner, see .github/workflows/build.yml.
 env:
   BB_NUMBER_THREADS: "8"
   PARALLEL_MAKE: "-j16"
+  # Recipes whose task hashes must not change when the Swift toolchain is
+  # enabled, see ci/check-isolation.sh: some that use the distro compiler and
+  # the clang of meta-clang itself.
+  SWIFT_ISOLATION_TARGETS: "glib-2.0 gtk4 mesa gstreamer1.0 clang"
 
 local_conf_header:
   meta-swift: |
     require conf/distro/include/swift-toolchain.inc
+  # The kas container runs Debian 13, which scarthgap predates and does not
+  # list as a tested host. The CI builds on it fine, so add it and avoid the
+  # warning in every build.
+  scarthgap-host: |
+    SANITY_TESTED_DISTROS:append = " \n debian-13 \n"
   ci: |
     INHERIT += "rm_work"
     BB_DISKMON_DIRS = "\

@@ -12,8 +12,8 @@
 #   swift-stage0-native  6.2, C++ only
 #   swift-stage1-native  6.2, with swift-syntax and macros, built by stage 0
 #   swift-stage2-native  6.2, full compiler, built by stage 1
-#   swift-stage3-native  6.4 against clang-native, built by stage 2
-#   swift-native         6.4 against clang-native, built by stage 3
+#   swift-stage3-native  6.4 against swift-llvm-native, built by stage 2
+#   swift-native         6.4 against swift-llvm-native, built by stage 3
 # None of the stages is packaged; only swift-native and nativesdk-swift are.
 
 SWIFT_VERSION = "6.2.4"

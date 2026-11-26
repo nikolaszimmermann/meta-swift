@@ -108,6 +108,13 @@ jobs:
         env:
           META_SWIFT_CI_CACHE: ${{ vars.META_SWIFT_CI_CACHE }}
 
+      - name: Check isolation
+        run: |
+          # The Swift toolchain must leave the recipes that do not use Swift
+          # alone, down to their task hashes.
+          "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
+            shell "ci/kas/${{ matrix.config }}.yml" -c /repo/ci/check-isolation.sh
+
       - name: Fetch
         run: |
           # The cold build fetches llvm-project and many Swift repositories;

@@ -1,14 +1,14 @@
 SUMMARY = "Swift standard library and runtime"
 DESCRIPTION = "The Swift runtime, standard library, Concurrency, Synchronization, \
 C++ interoperability and the other core modules, built for the target (or \
-the SDK host) by swift-native and the swiftlang clang of this build."
+the SDK host) by swift-native and the private swiftlang clang (swift-llvm)."
 HOMEPAGE = "https://www.swift.org"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f6c482a0548ea60d6c2e015776534035"
 
 require swift-version.inc
 
-DEPENDS += "libdispatch clang-native"
+DEPENDS += "libdispatch"
 
 PV = "${SWIFT_VERSION}"
 
@@ -31,13 +31,13 @@ inherit swift-base cmake python3native
 # SWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS). Here the clang driver finds
 # the gcc install and libstdc++ of the target sysroot by itself.
 #
-# The runtime is built without C++ exceptions, like upstream. Upstream gets
-# that from LLVM's CMake (LLVM_ENABLE_EH=OFF); meta-clang's LLVM has EH on, so
-# say it explicitly. Otherwise the Objective-C++ sources of the runtime pull in
+# The runtime is built without C++ exceptions, like upstream. Say it
+# explicitly instead of relying on the LLVM_ENABLE_EH of the LLVM build.
+# Otherwise the Objective-C++ sources of the runtime pull in
 # __gnu_objc_personality_v0, which nothing provides on Linux.
 #
-# The runtime pieces are written in C++ and compiled by clang-cross; the
-# Swift parts by swift-native. Both are the same swiftlang LLVM.
+# The runtime pieces are written in C++ and compiled by the private swiftlang
+# clang, the Swift parts by swift-native. Both are the same swiftlang LLVM.
 #
 # Swift's CMake does not use SWIFTFLAGS: pass it ConciseMagicFile (see
 # swift-base.bbclass), so that #file does not put build paths into the
@@ -46,9 +46,9 @@ SWIFT_THREADING_PACKAGE = "${@oe.utils.conditional('SWIFT_TARGET_ARCH', 'armv7',
 
 EXTRA_OECMAKE = "\
     -DCMAKE_BUILD_TYPE=Release \
-    -DLLVM_DIR=${STAGING_LIBDIR_NATIVE}/cmake/llvm \
-    -DClang_DIR=${STAGING_LIBDIR_NATIVE}/cmake/clang \
-    -DLLVM_TABLEGEN=${STAGING_BINDIR_NATIVE}/llvm-tblgen \
+    -DLLVM_DIR=${SWIFT_LLVM_PREFIX_NATIVE}/lib/cmake/llvm \
+    -DClang_DIR=${SWIFT_LLVM_PREFIX_NATIVE}/lib/cmake/clang \
+    -DLLVM_TABLEGEN=${SWIFT_LLVM_BINDIR}/llvm-tblgen \
     -DSWIFT_INCLUDE_TOOLS=OFF \
     -DSWIFT_INCLUDE_TESTS=OFF \
     -DSWIFT_INCLUDE_DOCS=OFF \
@@ -59,8 +59,8 @@ EXTRA_OECMAKE = "\
     -DSWIFT_BUILD_RUNTIME_WITH_HOST_COMPILER=ON \
     -DSWIFT_PREBUILT_CLANG=ON \
     -DSWIFT_NATIVE_SWIFT_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
-    -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
-    -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${STAGING_BINDIR_NATIVE} \
+    -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_BINDIR} \
+    -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_BINDIR} \
     -DSWIFT_SDKS=LINUX \
     -DSWIFT_HOST_VARIANT_SDK=LINUX \
     -DSWIFT_HOST_VARIANT_ARCH=${SWIFT_TARGET_ARCH} \

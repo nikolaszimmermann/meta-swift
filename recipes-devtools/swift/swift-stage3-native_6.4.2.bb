@@ -1,6 +1,6 @@
 SUMMARY = "Swift compiler, bootstrap stage 3 (first Swift 6.4)"
 DESCRIPTION = "Swift 6.4 built by the Swift 6.2 swift-stage2-native, against \
-clang-native. It builds swift-native and is never packaged."
+swift-llvm-native. It builds swift-native and is never packaged."
 
 require swift-compiler.inc
 

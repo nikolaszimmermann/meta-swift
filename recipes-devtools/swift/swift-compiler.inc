@@ -1,5 +1,5 @@
-# The Swift compiler, built standalone against the clang/LLVM of this build
-# (the swiftlang fork, see conf/distro/include/swift-toolchain.inc).
+# The Swift compiler, built standalone against the private LLVM of the
+# swiftlang fork (swift-llvm, see conf/distro/include/swift-toolchain.inc).
 #
 # Swift's compiler is partly written in Swift and has to be bootstrapped,
 # see swift-bootstrap.inc. No prebuilt Swift is involved at any point.
@@ -11,7 +11,7 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f6c482a0548ea60d6c2e015776534035"
 
 require swift-version.inc
 
-DEPENDS += "clang-native ninja-native libxml2-native util-linux-native zlib-native ncurses-native libedit-native libdispatch-native"
+DEPENDS += "ninja-native libxml2-native util-linux-native zlib-native ncurses-native libedit-native libdispatch-native"
 
 PV = "${SWIFT_VERSION}"
 
@@ -49,11 +49,14 @@ EXTRA_OECMAKE:append:class-native = "${@" -DCMAKE_Swift_FLAGS='%s -Xlinker -rpat
 # Where this stage installs. Bootstrap stages stay out of the regular prefix.
 SWIFT_STAGE_PREFIX ?= "${prefix}"
 
-# The LLVM/clang this compiler is built against and embeds. By default the
-# clang-native of this build (the swiftlang fork of SWIFT_VERSION).
-SWIFT_LLVM_PREFIX ?= "${STAGING_DIR_NATIVE}${prefix_native}"
+# The LLVM/clang this compiler is built against and embeds. By default
+# swift-llvm-native, the swiftlang fork of SWIFT_VERSION.
+SWIFT_LLVM_PREFIX ?= "${SWIFT_LLVM_PREFIX_NATIVE}"
 
-# cmark is a build-time only dependency of the compiler (doc comments).
+# cmark is a build-time only dependency of the compiler (doc comments). The
+# target triple and the sysroot are not part of the compiler and CFLAGS, but of
+# HOST_CC_ARCH and TOOLCHAIN_OPTIONS, which CMake gets like the cmake class
+# passes them.
 SWIFT_CMARK_BUILDDIR = "${WORKDIR}/build-cmark"
 
 do_configure:prepend() {
@@ -61,8 +64,8 @@ do_configure:prepend() {
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_COMPILER="${OECMAKE_C_COMPILER}" \
         -DCMAKE_CXX_COMPILER="${OECMAKE_CXX_COMPILER}" \
-        -DCMAKE_C_FLAGS="${CFLAGS}" \
-        -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
+        -DCMAKE_C_FLAGS="${HOST_CC_ARCH}${TOOLCHAIN_OPTIONS} ${CFLAGS}" \
+        -DCMAKE_CXX_FLAGS="${HOST_CC_ARCH}${TOOLCHAIN_OPTIONS} ${CXXFLAGS}" \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DCMARK_TESTS=OFF \
         -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \

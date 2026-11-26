@@ -29,4 +29,12 @@ program=$sdk/hello
 "$SWIFTC" -target "$SWIFT_TARGET" $SWIFTFLAGS -O \
     -o "$program" "$layer/ci/sdk-test/hello.swift"
 $READELF -h "$program" | grep -E 'Class|Machine'
+
+# The C/C++ compiler for code that Swift imports: the private clang of the SDK.
+# SWIFT_CLANGCXX holds several words, split on purpose.
+# shellcheck disable=SC2086
+$SWIFT_CLANGCXX -O2 -o "$sdk/hello-cxx" "$layer/ci/sdk-test/hello.cpp"
+$READELF -h "$sdk/hello-cxx" | grep -E 'Machine'
+$READELF -p .comment "$sdk/hello-cxx" | grep -q 'clang version' ||
+    { echo "hello-cxx was not compiled by clang" >&2; exit 1; }
 echo "SDK test passed: $SWIFT_TARGET"
