@@ -1,6 +1,7 @@
 {
   "variables": {
     "known": [
+      "DEBUG_PREFIX_MAP_EXTRA",
       "SRCREV_cmark",
       "SRCREV_collections",
       "SRCREV_corelibsfoundation",
@@ -32,7 +33,8 @@
       "SWIFT_STRING_PROCESSING_SRCDIR",
       "SWIFT_SYNTAX_SRCDIR",
       "SWIFT_TARGET",
-      "SWIFT_TARGET_ARCH"
+      "SWIFT_TARGET_ARCH",
+      "TCOVERRIDE"
     ]
   },
   "replacements": {

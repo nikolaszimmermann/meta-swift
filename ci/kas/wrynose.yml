@@ -1,0 +1,38 @@
+# CI build of the Swift toolchain on wrynose, without meta-clang. The machine
+# is set by the wrynose-<machine>.yml files that include this one.
+#
+# From whinlatter on, poky is no longer a combined repository. bitbake,
+# OE-core and meta-yocto (for the poky distro) are checked out on their own.
+
+header:
+  version: 14
+  includes:
+    - ci/kas/common.yml
+
+repos:
+  bitbake:
+    url: https://git.openembedded.org/bitbake
+    branch: "2.18"
+    commit: 6e260eb6ab1631607ea414d9ff8ede1155faa5d9
+    layers:
+      .: disabled
+
+  openembedded-core:
+    url: https://git.openembedded.org/openembedded-core
+    branch: wrynose
+    commit: 16a03ed6c2db2fa1d7edac4f288a74958a00eb9f
+    layers:
+      meta:
+
+  meta-yocto:
+    url: https://git.yoctoproject.org/meta-yocto
+    branch: wrynose
+    commit: e941c69844c28fc40c4f149251f7281207525abe
+    layers:
+      meta-poky:
+
+env:
+  # Recipes whose task hashes must not change when the Swift toolchain is
+  # enabled, see ci/check-isolation.sh: some that use the distro compiler, and
+  # the LLVM of OE-core and recipes built against it.
+  SWIFT_ISOLATION_TARGETS: "glib-2.0 gtk4 mesa gstreamer1.0 llvm spirv-llvm-translator rust"

@@ -188,6 +188,18 @@ do_install:append:class-native() {
 # relocate it. meta-clang does the same.
 SSTATE_SCAN_FILES:remove = "*-config"
 
+# The SDK host variant is packaged, so keep build paths out of it. The CMake
+# package of LLVM records the lit of the build directory, which no SDK has,
+# like meta-clang removes it from its nativesdk-clang.
+do_install:append:class-nativesdk() {
+    sed -i -e 's#${B}/./bin/##g' -e 's#${B}##g' ${D}${SWIFT_LLVM_PREFIX_INSTALL}/lib/cmake/llvm/LLVMConfig.cmake
+}
+# llvm-config reports the configuration of the build, build paths included,
+# by design. It can not be left out, as the CMake package of LLVM exports it,
+# and nothing in the SDK uses those paths.
+# nooelint: oelint.vars.insaneskip
+INSANE_SKIP:${PN}:append:class-nativesdk = " buildpaths"
+
 # Only the build host variant is staged with libexec by default. Swift for the
 # SDK host builds against the SDK host variant.
 SYSROOT_DIRS:append:class-nativesdk = " ${SWIFT_LLVM_PREFIX_INSTALL}"

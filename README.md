@@ -14,7 +14,7 @@ untouched.
 | --------------- | --------------------------------------------------- |
 | Swift           | 6.4.2                                               |
 | LLVM            | 21.1, [swiftlang/llvm-project](https://github.com/swiftlang/llvm-project) |
-| Yocto releases  | scarthgap (built and tested), wrynose (in progress) |
+| Yocto releases  | scarthgap, wrynose (built and tested)               |
 | Targets         | aarch64, armv7 (hard-float), x86_64                 |
 | Build/SDK hosts | x86_64, aarch64                                     |
 
@@ -53,8 +53,9 @@ untouched.
    bitbake swift-cxx-interop-test
    ```
 
-With kas, [`ci/kas/scarthgap.yml`](ci/kas/scarthgap.yml) is a complete
-configuration to start from. Plan for a long first build, see
+With kas, [`ci/kas/scarthgap.yml`](ci/kas/scarthgap.yml) and
+[`ci/kas/wrynose.yml`](ci/kas/wrynose.yml) are complete configurations to
+start from. Plan for a long first build, see
 [Building](#building).
 
 ## How it works
@@ -189,7 +190,7 @@ SDK.
 | Release   | Status           |
 | --------- | ---------------- |
 | scarthgap | built and tested |
-| wrynose   | in progress      |
+| wrynose   | built and tested |
 
 Both are LTS releases. The layer does not support the short-lived stable
 releases in between.
@@ -216,7 +217,7 @@ process.
 > [!WARNING]
 > With the bitbake defaults, a 40-CPU machine with 64 GB of RAM ran out of
 > memory. Limit `BB_NUMBER_THREADS` and `PARALLEL_MAKE` as
-> [`ci/kas/scarthgap.yml`](ci/kas/scarthgap.yml) does, and share `DL_DIR`
+> [`ci/kas/common.yml`](ci/kas/common.yml) does, and share `DL_DIR`
 > and `SSTATE_DIR` between builds.
 
 ### Reproducing a CI build
@@ -241,10 +242,11 @@ against it. The badges at the top show their state on `main`.
 
 ### build
 
-There is one job per kas configuration: scarthgap with qemuarm64, qemuarm
-and qemux86-64, i.e. aarch64, ARMv7 hard-float and x86_64. The build is far too large for
-GitHub-hosted runners, so it runs on a self-hosted runner labelled
-`meta-swift`. Each job:
+There is one job per kas configuration: scarthgap and wrynose, each with
+qemuarm64, qemuarm and qemux86-64, i.e. aarch64, ARMv7 hard-float and
+x86_64. `ci/kas/common.yml` holds what the releases share. The build is far
+too large for GitHub-hosted runners, so it runs on a self-hosted runner
+labelled `meta-swift`. Each job:
 
 1. checks that the Swift toolchain leaves the task hashes of recipes without
    Swift unchanged ([`ci/check-isolation.sh`](ci/check-isolation.sh)),
@@ -273,7 +275,7 @@ directory (`TMPDIR`) from sstate. Pull requests from forks of external
 contributors only run once approved.
 
 Any runner with the `meta-swift` label can take a job. The build parallelism
-in `ci/kas/scarthgap.yml` fits a runner with 40 CPUs and 64 GB of RAM. A
+in `ci/kas/common.yml` fits a runner with 40 CPUs and 64 GB of RAM. A
 smaller runner lowers it in the `.env` file in its installation directory:
 
 ```sh

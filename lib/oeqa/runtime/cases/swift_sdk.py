@@ -4,7 +4,7 @@
 
 # Runs the program that ci/test-sdk.sh compiled with the SDK on the target,
 # to check that what the SDK produces runs against the Swift runtime of the
-# image. SWIFT_SDK_TEST_PROGRAM names the program, see ci/kas/scarthgap.yml.
+# image. SWIFT_SDK_TEST_PROGRAM names the program, see ci/kas/common.yml.
 
 import os
 

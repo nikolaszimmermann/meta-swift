@@ -1,0 +1,10 @@
+# 32-bit ARMv7 hard-float (cortex-a15)
+#
+#   kas-container build ci/kas/wrynose-qemuarm.yml
+
+header:
+  version: 14
+  includes:
+    - ci/kas/wrynose.yml
+
+machine: qemuarm

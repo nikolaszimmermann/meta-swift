@@ -1,0 +1,10 @@
+# aarch64
+#
+#   kas-container build ci/kas/wrynose-qemuarm64.yml
+
+header:
+  version: 14
+  includes:
+    - ci/kas/wrynose.yml
+
+machine: qemuarm64

@@ -58,6 +58,10 @@ EXTRA_OECMAKE:remove:class-nativesdk = "\
     -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
     -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
 "
+# CMake honours CMAKE_LINKER_TYPE from 3.29 on (scarthgap has 3.28, wrynose
+# 4.x), and it knows no BFD linker type for Swift. bfd is the default linker
+# of the toolchain anyway, and Swift links through SWIFT_USE_LINKER.
+SWIFT_SDK_HOST_LINKER_TYPE = "${@'' if 'wrynose' in (d.getVar('LAYERSERIES_CORENAMES') or '').split() else '-DCMAKE_LINKER_TYPE=BFD'}"
 EXTRA_OECMAKE:append:class-nativesdk = "\
     -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_BINDIR} \
     -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_BINDIR} \
@@ -69,7 +73,7 @@ EXTRA_OECMAKE:append:class-nativesdk = "\
     -DCMAKE_Swift_COMPILER_WORKS=ON \
     -DCMAKE_Swift_FLAGS='-sdk ${STAGING_DIR_HOST} -resource-dir ${STAGING_LIBDIR}/swift' \
     -DSWIFT_BUILD_STDLIB=OFF \
-    -DCMAKE_LINKER_TYPE=BFD \
+    ${SWIFT_SDK_HOST_LINKER_TYPE} \
     -DSWIFT_USE_LINKER=bfd \
     -DSWIFT_PATH_TO_SWIFT_SDK=${STAGING_DIR_HOST} \
     -DSWIFT_COMPILER_SOURCES_SDK_FLAGS='-sdk;${STAGING_DIR_HOST};-resource-dir;${STAGING_LIBDIR}/swift' \
