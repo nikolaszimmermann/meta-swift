@@ -257,9 +257,11 @@ GitHub-hosted runners, so it runs on a self-hosted runner labelled
 5. boots the image in QEMU with `testimage` and runs the ptest of
    `swift-cxx-interop-test` and the program from the SDK
    ([`swift_sdk.py`](lib/oeqa/runtime/cases/swift_sdk.py)) on it,
-6. fails when bitbake reports a non-deterministic task hash, since that
+6. cleans the work directories that `rm_work` leaves, those of the SDK host
+   recipes and of the image, so that the build directory stays small,
+7. fails when bitbake reports a non-deterministic task hash, since that
    breaks sstate reuse, even if every task succeeded,
-7. on failure, uploads the logs of failed tasks and the QEMU test logs as
+8. on failure, uploads the logs of failed tasks and the QEMU test logs as
    the `logs-<config>` artifact of the run, kept for 14 days.
 
 Downloads, sstate and the build directory persist in `~/meta-swift-ci`, or
