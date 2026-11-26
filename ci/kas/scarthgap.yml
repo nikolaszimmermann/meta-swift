@@ -85,3 +85,6 @@ local_conf_header:
     QEMU_USE_KVM = "0"
     QB_MEM = "-m 1024"
     SWIFT_SDK_TEST_PROGRAM = "${TOPDIR}/sdk-test-programs/hello"
+    # testimage reads the variables from the testdata.json of the image, which
+    # is only written when the image is built. Take the current value.
+    TESTIMAGE_UPDATE_VARS:append = " SWIFT_SDK_TEST_PROGRAM"
