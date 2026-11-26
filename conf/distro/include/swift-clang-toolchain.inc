@@ -42,24 +42,18 @@ DEBUG_PREFIX_MAP:remove:toolchain-swiftclang = "-fcanon-prefix-map"
 # about arguments that clang does not use in a given step. The SDK
 # environment (meta-environment.bbappend) applies the same to the tune flags
 # of its clang.
-SWIFT_CLANG_TUNE_REMOVE = "\
-    -mcpu=cortex-a57.cortex-a53${TUNE_CCARGS_MARCH_OPTS} \
-    -mcpu=cortex-a72.cortex-a53${TUNE_CCARGS_MARCH_OPTS} \
-    -mcpu=cortex-a15.cortex-a7${TUNE_CCARGS_MARCH_OPTS} \
-    -mcpu=cortex-a17.cortex-a7${TUNE_CCARGS_MARCH_OPTS} \
-    -mcpu=cortex-a72.cortex-a35${TUNE_CCARGS_MARCH_OPTS} \
-    -mcpu=cortex-a73.cortex-a53${TUNE_CCARGS_MARCH_OPTS} \
-    -mcpu=cortex-a75.cortex-a55${TUNE_CCARGS_MARCH_OPTS} \
-    -mcpu=cortex-a76.cortex-a55${TUNE_CCARGS_MARCH_OPTS} \
+# The tunes are written as inline Python with d.getVar('TUNE_CCARGS_MARCH_OPTS'):
+# only the ARM tunes define that variable, and bitbake does not evaluate an
+# inline Python expression that refers to an undefined one. Conf files can not
+# define Python functions, hence the long lines.
+SWIFT_CLANG_LITTLE_CORES = "\
+    cortexa72-cortexa53:cortex-a53 cortexa57-cortexa53:cortex-a53 cortexa73-cortexa53:cortex-a53 \
+    cortexa15-cortexa7:cortex-a7 cortexa17-cortexa7:cortex-a7 \
+    cortexa72-cortexa35:cortex-a35 \
+    cortexa75-cortexa55:cortex-a55 cortexa76-cortexa55:cortex-a55 \
 "
-SWIFT_CLANG_TUNE_APPEND = "\
-    ${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa72-cortexa53 cortexa57-cortexa53 cortexa73-cortexa53', '-mcpu=cortex-a53${TUNE_CCARGS_MARCH_OPTS}', '', d)} \
-    ${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa15-cortexa7 cortexa17-cortexa7', '-mcpu=cortex-a7${TUNE_CCARGS_MARCH_OPTS}', '', d)} \
-    ${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa72-cortexa35', '-mcpu=cortex-a35${TUNE_CCARGS_MARCH_OPTS}', '', d)} \
-    ${@bb.utils.contains_any('TUNE_FEATURES', 'cortexa75-cortexa55 cortexa76-cortexa55', '-mcpu=cortex-a55${TUNE_CCARGS_MARCH_OPTS}', '', d)} \
-    ${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '--dyld-prefix=/usr', '', d)} \
-    -Qunused-arguments \
-"
+SWIFT_CLANG_TUNE_REMOVE = "${@' '.join('-mcpu=%s%s' % (t.split(':')[0].replace('cortexa', 'cortex-a').replace('-cortex-a', '.cortex-a'), d.getVar('TUNE_CCARGS_MARCH_OPTS') or '') for t in d.getVar('SWIFT_CLANG_LITTLE_CORES').split())}"
+SWIFT_CLANG_TUNE_APPEND = "${@' '.join(sorted(set('-mcpu=%s%s' % (t.split(':')[1], d.getVar('TUNE_CCARGS_MARCH_OPTS') or '') for t in d.getVar('SWIFT_CLANG_LITTLE_CORES').split() if t.split(':')[0] in d.getVar('TUNE_FEATURES').split())) + bb.utils.contains('DISTRO_FEATURES', 'usrmerge', ['--dyld-prefix=/usr'], [], d) + ['-Qunused-arguments'])}"
 TUNE_CCARGS:remove:toolchain-swiftclang = "${SWIFT_CLANG_TUNE_REMOVE}"
 TUNE_CCARGS:append:toolchain-swiftclang = " ${SWIFT_CLANG_TUNE_APPEND}"
 # Work around https://github.com/llvm/llvm-project/issues/85699 for the
