@@ -50,6 +50,7 @@ jobs:
           - wrynose-qemuarm64
           - wrynose-qemuarm
           - wrynose-qemux86-64
+          - wrynose-qemuarm64-musl
     steps:
       - uses: actions/checkout@v7
 
