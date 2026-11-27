@@ -14,7 +14,7 @@ TOOLCHAIN:class-nativesdk = "swiftclang"
 python () {
     if bb.data.inherits_class('nativesdk', d) and d.getVar('SDK_ARCH') not in ('x86_64', 'aarch64'):
         raise bb.parse.SkipRecipe('Swift supports the SDK hosts x86_64 and aarch64, not %s. '
-                                  'Set SWIFTSDK = "0" to leave Swift out of the SDK.'
+                                  'An SDK can leave Swift out with SWIFTSDK = "0".'
                                   % d.getVar('SDK_ARCH'))
 }
 
