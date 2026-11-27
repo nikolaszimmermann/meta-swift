@@ -37,7 +37,7 @@ jobs:
   build:
     name: ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, meta-swift]
-    # A cold build (several LLVMs + five Swift compiler builds) takes many
+    # A cold build (several LLVMs + six Swift compiler builds) takes many
     # hours.
     timeout-minutes: 1440
     strategy:
