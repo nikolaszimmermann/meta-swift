@@ -321,9 +321,7 @@ comes from meta-clang, rebased onto the fork.
 
 | Project | Patch | What it does |
 | ------- | ----- | ------------ |
-| llvm-project | [0100](recipes-devtools/swift/swift-llvm/0100-lldb-Only-install-the-copied-clang-resource-director.patch) | lldb only installs `lib/lldb/clang` with Swift support, which fails the install without it. |
 | llvm-project | [0101](recipes-devtools/swift/swift-llvm/0101-clang-Prefer-sysroot-usr-for-GCC-in-usrmerge-sysroots.patch) | clang finds GCC under `<sysroot>/usr` in usrmerge sysroots, so the libstdc++ module map of Swift covers the headers clang reads. |
-| llvm-project | [0102](recipes-devtools/swift/swift-llvm/0102-lldb-Fix-the-VirtualDataExtractor-build-for-32-bit-t.patch) | Fixes the lldb build for 32-bit targets. |
 | swift | [0001](recipes-devtools/swift/files/0001-cmake-Support-standalone-builds-against-an-installed.patch) | Builds the compiler against an installed LLVM and clang instead of an LLVM build tree. Also in [bootstrap-6.2](recipes-devtools/swift/files/bootstrap-6.2/0001-cmake-Support-standalone-builds-against-an-installed.patch). |
 | swift | [0002](recipes-devtools/swift/files/0002-SwiftConfigureSDK-Allow-overriding-the-Linux-target-.patch) | Lets the build pick the Linux target triple, e.g. `aarch64-poky-linux`. |
 | swift | [0003](recipes-devtools/swift/files/0003-sil-missing-headers.patch) | Includes the clang headers that complete the iterators of `clang::DeclContext`, adapted from nixpkgs. |
