@@ -9,6 +9,21 @@
 # triple (Yocto conveys it through -mfloat-abi=hard instead).
 SWIFT_TARGET_ARCH = "${@oe.utils.conditional('HOST_ARCH', 'arm', 'armv7', d.getVar('HOST_ARCH'), d)}"
 SWIFT_TARGET = "${@oe.utils.conditional('HOST_ARCH', 'arm', d.getVar('HOST_SYS').replace('arm-', 'armv7-', 1) + 'hf', d.getVar('HOST_SYS'), d)}"
+# That triple only fits ARMv7 and newer with the hard-float ABI, the only
+# 32-bit arm that Swift supports: skip the Swift recipes for other tunes.
+# meta-environment, which every SDK needs, is not skipped.
+python () {
+    import re
+    if d.getVar('HOST_ARCH') != 'arm' or bb.data.inherits_class('cross-canadian', d):
+        return
+    tune = d.getVar('TUNE_FEATURES').split()
+    arches = d.getVar('MACHINEOVERRIDES').split(':')
+    if 'callconvention-hard' not in tune or not any(re.match(r'armv(7a|7ve|8|9)', a) for a in arches):
+        raise bb.parse.SkipRecipe('Swift supports 32-bit arm only as ARMv7 or newer with the '
+                                  'hard-float ABI (callconvention-hard), not the tune %s'
+                                  % d.getVar('DEFAULTTUNE'))
+}
+
 # swift-native builds its standard library for the generic triple.
 SWIFT_TARGET:class-native = "${BUILD_ARCH}-unknown-linux-gnu"
 

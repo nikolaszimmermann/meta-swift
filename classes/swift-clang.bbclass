@@ -9,6 +9,14 @@
 TOOLCHAIN:class-target = "swiftclang"
 TOOLCHAIN:class-nativesdk = "swiftclang"
 
+# The swiftclang toolchain knows the loader of the x86_64 and aarch64 SDK hosts
+# only (LDFLAGS in conf/distro/include/swift-clang-toolchain.inc).
+python () {
+    if bb.data.inherits_class('nativesdk', d) and d.getVar('SDK_ARCH') not in ('x86_64', 'aarch64'):
+        raise bb.parse.SkipRecipe('Swift supports the SDK hosts x86_64 and aarch64, not %s'
+                                  % d.getVar('SDK_ARCH'))
+}
+
 BUILD_CC:class-native = "${CCACHE}${SWIFT_LLVM_BINDIR}/clang ${BUILD_CC_ARCH}"
 BUILD_CXX:class-native = "${CCACHE}${SWIFT_LLVM_BINDIR}/clang++ ${BUILD_CC_ARCH}"
 BUILD_CPP:class-native = "${SWIFT_LLVM_BINDIR}/clang ${BUILD_CC_ARCH} -E"
