@@ -2,8 +2,8 @@
 # Clean the work directories that rm_work left in the build directory, which
 # persists across CI runs. rm_work only cleans the recipes that the targets
 # reach through do_build. The SDK host recipes, which only do_populate_sdk
-# pulls in, the QEMU of testimage and the image (RM_WORK_EXCLUDE) keep tens of
-# GB. Runs in the kas container, where the build directory is /build:
+# pulls in, and the QEMU of testimage keep tens of GB. Runs in the kas
+# container, where the build directory is /build:
 #
 #   kas-container shell ci/kas/<config>.yml -c /repo/ci/trim-build-dir.sh
 #
@@ -38,6 +38,14 @@ if [ "${#current[@]}" -eq 0 ]; then
     exit 1
 fi
 
+# The image stays, as RM_WORK_EXCLUDE says: cleaning it also removes its
+# deployed output, so every run would repeat do_rootfs and do_populate_sdk.
+# rm_work empties its rootfs and sdk directories anyway.
+declare -A keep
+for recipe in $(bitbake-getvar --value RM_WORK_EXCLUDE 2>/dev/null); do
+    keep[$recipe]=1
+done
+
 recipes=()
 stale=()
 cd "$build/tmp/work"
@@ -46,8 +54,12 @@ for dir in */*/*; do
     if [ "$(du -sm "$dir" | cut -f1)" -lt "$min_mb" ]; then
         continue
     fi
+    recipe=$(echo "$dir" | cut -d/ -f2)
+    if [ -n "${keep[$recipe]:-}" ]; then
+        continue
+    fi
     if [ -n "${current[${dir#*/}]:-}" ]; then
-        recipes+=("$(echo "$dir" | cut -d/ -f2)")
+        recipes+=("$recipe")
     else
         # A recipe or version that is gone: bitbake cannot clean it.
         stale+=("$dir")

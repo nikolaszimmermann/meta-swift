@@ -268,8 +268,9 @@ labelled `meta-swift`. Each job:
    `swift-cxx-interop-test` and the program from the SDK
    ([`swift_sdk.py`](lib/oeqa/runtime/cases/swift_sdk.py)) on it,
 6. cleans the work directories that `rm_work` leaves, those of the SDK host
-   recipes, of the QEMU and of the image, with `bitbake -c clean`, so that the
-   build directory stays small without building anything
+   recipes and of the QEMU, with `bitbake -c clean`, so that the build
+   directory stays small without building anything. The image stays, so that
+   the next run does not have to create it and its SDK again
    ([`ci/trim-build-dir.sh`](ci/trim-build-dir.sh)),
 7. fails when bitbake reports a non-deterministic task hash, since that
    breaks sstate reuse, even if every task succeeded,
