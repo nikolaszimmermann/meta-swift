@@ -60,16 +60,6 @@ SWIFTFLAGS ?= "\
     ${SWIFT_DEBUG_PREFIX_MAP} \
 "
 
-# SDK host executables must be linked by ld.bfd of binutils-crosssdk: it
-# reserves room in the ELF interpreter path, which the SDK installer rewrites
-# when relocating the SDK (lld does not). The interpreter itself comes from
-# LDFLAGS (conf/distro/include/swift-clang-toolchain.inc), which the Swift
-# link does not see.
-def swift_sdk_dynamic_linker_flags(d):
-    import re
-    # LDFLAGS may already be in swiftc form (swift-cmake-tool.bbclass).
-    m = re.search(r'(?:-Wl,|-Xlinker\s+)-{1,2}dynamic-linker(?:[,=]|\s+-Xlinker\s+)(\S+)', d.getVar('LDFLAGS') or '')
-    return '-Xlinker -dynamic-linker -Xlinker %s' % m.group(1) if m else ''
 # Native tools run from the build sysroot, so they keep swiftc's rpath to the
 # runtime there (OE makes it relative when staging) and need no -sdk.
 SWIFTFLAGS:class-native = "\
@@ -82,8 +72,13 @@ SWIFTFLAGS:class-native = "\
 
 SWIFTFLAGS:append:libc-musl = " ${SWIFT_MUSL_XCC_FLAGS}"
 
+# SDK host executables must be linked by ld.bfd of binutils-crosssdk: it
+# reserves room in the ELF interpreter path, which the SDK installer rewrites
+# when relocating the SDK (lld does not). The Swift link does not see LDFLAGS,
+# so it gets the interpreter (conf/distro/include/swift-clang-toolchain.inc)
+# itself.
 SWIFTFLAGS:remove:class-nativesdk = "-use-ld=lld"
-SWIFTFLAGS:append:class-nativesdk = " -use-ld=bfd ${@swift_sdk_dynamic_linker_flags(d)}"
+SWIFTFLAGS:append:class-nativesdk = " -use-ld=bfd -Xlinker -dynamic-linker -Xlinker ${SWIFT_SDK_DYNAMIC_LINKER}"
 
 # The C++ headers that swiftc generates for Swift code include the C++ interop
 # support headers (swiftToCxx). They look for them in the include path first,
