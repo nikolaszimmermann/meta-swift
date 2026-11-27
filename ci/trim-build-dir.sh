@@ -38,11 +38,13 @@ if [ "${#current[@]}" -eq 0 ]; then
     exit 1
 fi
 
-# The image stays, as RM_WORK_EXCLUDE says: cleaning it also removes its
-# deployed output, so every run would repeat do_rootfs and do_populate_sdk.
-# rm_work empties its rootfs and sdk directories anyway.
+# The recipes of RM_WORK_EXCLUDE, the image, stay: cleaning the image also
+# removes its deployed output, so every run would repeat do_rootfs and
+# do_populate_sdk. Only drop its rootfs and sdk directories, like rm_work
+# does for the other images. Its deployed image and stamps stay.
+excluded=$(bitbake-getvar --value RM_WORK_EXCLUDE)
 declare -A keep
-for recipe in $(bitbake-getvar --value RM_WORK_EXCLUDE 2>/dev/null); do
+for recipe in $excluded; do
     keep[$recipe]=1
 done
 
@@ -55,14 +57,14 @@ for dir in */*/*; do
         continue
     fi
     recipe=$(echo "$dir" | cut -d/ -f2)
-    if [ -n "${keep[$recipe]:-}" ]; then
-        continue
-    fi
-    if [ -n "${current[${dir#*/}]:-}" ]; then
-        recipes+=("$recipe")
-    else
+    if [ -z "${current[${dir#*/}]:-}" ]; then
         # A recipe or version that is gone: bitbake cannot clean it.
         stale+=("$dir")
+    elif [ -n "${keep[$recipe]:-}" ]; then
+        echo "Removing the rootfs and sdk directories of $dir"
+        rm -rf "$dir/rootfs" "$dir/sdk"
+    else
+        recipes+=("$recipe")
     fi
 done
 

@@ -269,8 +269,9 @@ labelled `meta-swift`. Each job:
    ([`swift_sdk.py`](lib/oeqa/runtime/cases/swift_sdk.py)) on it,
 6. cleans the work directories that `rm_work` leaves, those of the SDK host
    recipes and of the QEMU, with `bitbake -c clean`, so that the build
-   directory stays small without building anything. The image stays, so that
-   the next run does not have to create it and its SDK again
+   directory stays small without building anything. Of the image it only
+   removes the rootfs and the SDK staging directory, so that the next run
+   does not have to create the image and its SDK again
    ([`ci/trim-build-dir.sh`](ci/trim-build-dir.sh)),
 7. fails when bitbake reports a non-deterministic task hash, since that
    breaks sstate reuse, even if every task succeeded,
