@@ -25,16 +25,7 @@ EXTRA_OECMAKE = "\
     -DBUILD_TESTING=OFF \
     -DBUILD_SHARED_LIBS=ON \
 "
-# musl declares program_invocation_short_name in errno.h only with
-# _GNU_SOURCE, which the CMake check of libdispatch leaves out, although it is
-# what the check turns on. Without it, getprogname() has no implementation.
-# Same as in libdispatch.
-EXTRA_OECMAKE:append:libc-musl = " -DHAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME=1"
-# On musl, sys/cdefs.h comes from bsd-headers, which warns that it is
-# non-standard, and libdispatch builds with -Werror. It needs the BSD macros
-# of the header, so only drop the warning.
-CFLAGS:append:libc-musl = " -Wno-#warnings"
-CXXFLAGS:append:libc-musl = " -Wno-#warnings"
+require libdispatch-common.inc
 
 # Only ship the Swift overlay and the module maps in lib/swift/{dispatch,os,
 # Block} it imports; the C library and its usr/include headers come from
@@ -49,19 +40,7 @@ do_install:append:libc-musl() {
 }
 
 FILES:${PN} = "${libdir}/swift/${SWIFT_PLATFORM}/libswiftDispatch.so"
-# Everything but the runtime libraries: modules, module maps and headers.
-# lib/swift/[!lm]* is all of lib/swift but the platform directory (linux or
-# musl).
-FILES:${PN}-dev = "\
-    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftmodule \
-    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftdoc \
-    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftinterface \
-    ${libdir}/swift/${SWIFT_PLATFORM}/${SWIFT_TARGET_ARCH} \
-    ${libdir}/swift/[!lm]* \
-    ${libdir}/swift/lib*.a \
-    ${libdir}/swift/${SWIFT_PLATFORM}/*.a \
-    ${libdir}/cmake \
-"
+FILES:${PN}-dev = "${SWIFT_MODULE_DEV_FILES}"
 # nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN} = "dev-so"
 
