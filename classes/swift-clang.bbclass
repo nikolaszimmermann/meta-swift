@@ -13,7 +13,8 @@ TOOLCHAIN:class-nativesdk = "swiftclang"
 # only (LDFLAGS in conf/distro/include/swift-clang-toolchain.inc).
 python () {
     if bb.data.inherits_class('nativesdk', d) and d.getVar('SDK_ARCH') not in ('x86_64', 'aarch64'):
-        raise bb.parse.SkipRecipe('Swift supports the SDK hosts x86_64 and aarch64, not %s'
+        raise bb.parse.SkipRecipe('Swift supports the SDK hosts x86_64 and aarch64, not %s. '
+                                  'Set SWIFTSDK = "0" to leave Swift out of the SDK.'
                                   % d.getVar('SDK_ARCH'))
 }
 

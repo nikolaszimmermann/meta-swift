@@ -10,17 +10,25 @@
 SWIFT_TARGET_ARCH = "${@oe.utils.conditional('HOST_ARCH', 'arm', 'armv7', d.getVar('HOST_ARCH'), d)}"
 SWIFT_TARGET = "${@oe.utils.conditional('HOST_ARCH', 'arm', d.getVar('HOST_SYS').replace('arm-', 'armv7-', 1) + 'hf', d.getVar('HOST_SYS'), d)}"
 # That triple only fits ARMv7 and newer with the hard-float ABI, the only
-# 32-bit arm that Swift supports: skip the Swift recipes for other tunes.
-# meta-environment, which every SDK needs, is not skipped.
+# 32-bit arm that Swift supports: skip the Swift recipes of the target for
+# other tunes and for big-endian arm. The tune adds its architecture to
+# MACHINEOVERRIDES. meta-environment, which every SDK needs, is not skipped. An
+# SDK with Swift then fails on the skipped runtime, with this reason.
+SWIFT_ARM_ARCHES = "armv7a armv7ve armv8a"
 python () {
-    import re
-    if d.getVar('HOST_ARCH') != 'arm' or bb.data.inherits_class('cross-canadian', d):
+    if bb.data.inherits_class('cross-canadian', d):
+        return
+    if bb.data.inherits_class('native', d) or bb.data.inherits_class('nativesdk', d):
+        return
+    arch = d.getVar('HOST_ARCH')
+    if arch not in ('arm', 'armeb'):
         return
     tune = d.getVar('TUNE_FEATURES').split()
-    arches = d.getVar('MACHINEOVERRIDES').split(':')
-    if 'callconvention-hard' not in tune or not any(re.match(r'armv(7a|7ve|8|9)', a) for a in arches):
-        raise bb.parse.SkipRecipe('Swift supports 32-bit arm only as ARMv7 or newer with the '
-                                  'hard-float ABI (callconvention-hard), not the tune %s'
+    arches = set(d.getVar('MACHINEOVERRIDES').split(':'))
+    if arch == 'armeb' or 'callconvention-hard' not in tune or not arches & set(d.getVar('SWIFT_ARM_ARCHES').split()):
+        raise bb.parse.SkipRecipe('Swift supports 32-bit arm only as little-endian ARMv7 or newer '
+                                  'with the hard-float ABI (callconvention-hard), not the tune %s. '
+                                  'Set SWIFTSDK = "0" to leave Swift out of the SDK.'
                                   % d.getVar('DEFAULTTUNE'))
 }
 
