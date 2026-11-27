@@ -29,13 +29,15 @@ def swift_sdk_clang_flags(d, var):
 SWIFT_SDK_CLANGCC_ARCH = "${@swift_sdk_clang_flags(d, 'TARGET_CC_ARCH')}"
 SWIFT_TUNE_CCARGS = "${@swift_sdk_clang_flags(d, 'TUNE_CCARGS')}"
 SWIFT_SDK_CLANG = "$OECORE_NATIVE_SYSROOT${prefix_nativesdk}/libexec/swift-llvm/bin"
+SWIFT_SDK_XCC_FLAGS = "${@swift_xcc_flags(d)}"
+SWIFT_SDK_XCC_FLAGS:append:libc-musl = " ${SWIFT_MUSL_XCC_FLAGS}"
 
 create_sdk_files:append:swiftllvm() {
     if ${@bb.utils.contains('SWIFTSDK', '1', 'true', 'false', d)}; then
         script=${SDK_OUTPUT}/${SDKPATH}/environment-setup-${REAL_MULTIMACH_TARGET_SYS}
         echo 'export SWIFTC="swiftc"' >> $script
         echo 'export SWIFT_TARGET="${SWIFT_SDK_TARGET}"' >> $script
-        echo 'export SWIFTFLAGS="-no-toolchain-stdlib-rpath -sdk $SDKTARGETSYSROOT -resource-dir $SDKTARGETSYSROOT${libdir}/swift -use-ld=lld -tools-directory ${SWIFT_SDK_CLANG} ${SWIFT_SDK_DYLD_PREFIX_FLAGS} ${@swift_xcc_flags(d)}"' >> $script
+        echo 'export SWIFTFLAGS="-no-toolchain-stdlib-rpath -sdk $SDKTARGETSYSROOT -resource-dir $SDKTARGETSYSROOT${libdir}/swift -use-ld=lld -tools-directory ${SWIFT_SDK_CLANG} ${SWIFT_SDK_DYLD_PREFIX_FLAGS} ${SWIFT_SDK_XCC_FLAGS}"' >> $script
         echo 'export SWIFT_CLANGCC="${SWIFT_SDK_CLANG}/clang -target ${TARGET_SYS} ${SWIFT_SDK_CLANGCC_ARCH} --sysroot=$SDKTARGETSYSROOT"' >> $script
         echo 'export SWIFT_CLANGCXX="${SWIFT_SDK_CLANG}/clang++ -target ${TARGET_SYS} ${SWIFT_SDK_CLANGCC_ARCH} --sysroot=$SDKTARGETSYSROOT -idirafter $SDKTARGETSYSROOT${libdir}/swift"' >> $script
         echo 'export SWIFT_CLANGCPP="${SWIFT_SDK_CLANG}/clang -E -target ${TARGET_SYS} ${SWIFT_SDK_CLANGCC_ARCH} --sysroot=$SDKTARGETSYSROOT"' >> $script

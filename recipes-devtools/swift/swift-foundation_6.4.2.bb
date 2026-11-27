@@ -37,6 +37,9 @@ EXTRA_OECMAKE = "\
     -D_SwiftCollections_SourceDIR=${SWIFT_UNPACKDIR}/swift-collections-1.1.6 \
     -DSwiftFoundation_MACRO=${STAGING_LIBDIR_NATIVE}/swift/host/plugins \
 "
+# Foundation installs into lib/swift/<lower-case CMAKE_SYSTEM_NAME>, linux. On
+# musl the platform directory is musl.
+EXTRA_OECMAKE:append:libc-musl = " -DSWIFT_SYSTEM_NAME=${SWIFT_PLATFORM}"
 
 # Foundation builds from several source trees next to each other, but the
 # prefix maps of OE (DEBUG_PREFIX_MAP) and of the Swift classes only cover
@@ -59,16 +62,18 @@ def swift_foundation_prefix_maps(d, opts):
 DEBUG_PREFIX_MAP:append = " ${@swift_foundation_prefix_maps(d, '-fdebug-prefix-map=%s;-fmacro-prefix-map=%s')}"
 SWIFT_DEBUG_PREFIX_MAP:append = " ${@swift_foundation_prefix_maps(d, '-file-prefix-map %s')}"
 
-FILES:${PN} = "${libdir}/swift/linux/lib*${SOLIBSDEV}"
+FILES:${PN} = "${libdir}/swift/${SWIFT_PLATFORM}/lib*${SOLIBSDEV}"
 # Everything but the runtime libraries: modules, module maps and headers.
+# lib/swift/[!lm]* is all of lib/swift but the platform directory (linux or
+# musl).
 FILES:${PN}-dev = "\
-    ${libdir}/swift/linux/*.swiftmodule \
-    ${libdir}/swift/linux/*.swiftdoc \
-    ${libdir}/swift/linux/*.swiftinterface \
-    ${libdir}/swift/linux/${SWIFT_TARGET_ARCH} \
-    ${libdir}/swift/[!l]* \
+    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftmodule \
+    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftdoc \
+    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftinterface \
+    ${libdir}/swift/${SWIFT_PLATFORM}/${SWIFT_TARGET_ARCH} \
+    ${libdir}/swift/[!lm]* \
     ${libdir}/swift/lib*.a \
-    ${libdir}/swift/linux/*.a \
+    ${libdir}/swift/${SWIFT_PLATFORM}/*.a \
     ${libdir}/cmake \
 "
 # nooelint: oelint.vars.insaneskip

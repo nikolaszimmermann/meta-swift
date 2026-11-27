@@ -9,6 +9,9 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f6c482a0548ea60d6c2e015776534035"
 require swift-version.inc
 
 DEPENDS += "libdispatch"
+# The module map of musl includes <fts.h>, which is not part of musl, and
+# links its library (see 0008).
+DEPENDS:append:libc-musl = " fts"
 
 PV = "${SWIFT_VERSION}"
 
@@ -23,9 +26,11 @@ SRC_URI = "\
     file://0002-SwiftConfigureSDK-Allow-overriding-the-Linux-target-.patch \
     file://0007-runtime-Fix-the-crash-handler-build-for-32-bit-ARM-L.patch \
 "
+# The Musl SDK for a distribution built on musl, see EXTRA_OECMAKE:libc-musl.
+SRC_URI:append:libc-musl = " file://0008-cmake-Support-a-shared-musl-runtime-for-Musl-distrib.patch"
 S = "${SWIFT_SRCDIR}"
 
-inherit swift-base cmake python3native
+inherit swift-base cmake python3native linuxloader
 
 # Upstream points the C++ overlay at the build host's gcc (--gcc-toolchain=/usr,
 # SWIFT_SDK_LINUX_CXX_OVERLAY_SWIFT_COMPILE_FLAGS). Here the clang driver finds
@@ -98,15 +103,34 @@ EXTRA_OECMAKE = "\
     -DSWIFT_STDLIB_EXTRA_SWIFT_COMPILE_FLAGS='${@';'.join(d.getVar('SWIFT_CONCISE_MAGIC_FILE').split())}' \
 "
 
+# On musl (target only, the SDK host stays on glibc), build the Musl SDK
+# (LINUX_STATIC) instead, which Swift itself only builds as the static Linux
+# SDK. SWIFT_MUSL_DISTRIBUTION builds it shared, for the triple and sysroot of
+# the distribution, in lib/swift/musl (SWIFT_PLATFORM), where the compiler
+# looks for the runtime of a triple such as aarch64-poky-linux-musl (see
+# 0008). These definitions come after those of the Linux SDK above, and CMake
+# takes the last one. The host SDK stays LINUX: Swift only configures the Musl
+# SDK next to it, and no host tools are built.
+EXTRA_OECMAKE:append:libc-musl = " \
+    -DSWIFT_MUSL_DISTRIBUTION=ON \
+    -DSWIFT_SDKS=LINUX_STATIC \
+    -DSWIFT_PRIMARY_VARIANT_SDK=LINUX_STATIC \
+    -DSWIFT_SDK_LINUX_STATIC_ARCHITECTURES=${SWIFT_TARGET_ARCH} \
+    -DSWIFT_SDK_LINUX_STATIC_ARCH_${SWIFT_TARGET_ARCH}_PATH=${STAGING_DIR_HOST} \
+    -DSWIFT_SDK_LINUX_STATIC_ARCH_${SWIFT_TARGET_ARCH}_TRIPLE=${SWIFT_TARGET} \
+    -DSWIFT_SDK_LINUX_STATIC_CXX_OVERLAY_SWIFT_COMPILE_FLAGS= \
+    -DSWIFT_STANDARD_LIBRARY_SWIFT_FLAGS='${@swift_xcc_flags_cmake_list(d)};${@';'.join(d.getVar('SWIFT_MUSL_XCC_FLAGS').split())}' \
+"
+
 FILES:${PN} = "\
-    ${libdir}/swift/linux/lib*${SOLIBSDEV} \
+    ${libdir}/swift/${SWIFT_PLATFORM}/lib*${SOLIBSDEV} \
 "
 FILES:${PN}-dev = "\
-    ${libdir}/swift/linux/*.swiftmodule \
-    ${libdir}/swift/linux/*.modulemap \
-    ${libdir}/swift/linux/*.h \
-    ${libdir}/swift/linux/*.a \
-    ${libdir}/swift/linux/${SWIFT_TARGET_ARCH} \
+    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftmodule \
+    ${libdir}/swift/${SWIFT_PLATFORM}/*.modulemap \
+    ${libdir}/swift/${SWIFT_PLATFORM}/*.h \
+    ${libdir}/swift/${SWIFT_PLATFORM}/*.a \
+    ${libdir}/swift/${SWIFT_PLATFORM}/${SWIFT_TARGET_ARCH} \
     ${libdir}/swift/shims \
     ${libdir}/swift/apinotes \
     ${libdir}/swift/clang \
@@ -131,7 +155,7 @@ do_install:append() {
 
 # gyb marks where the lines of its outputs come from with comments that carry
 # the absolute path of the template in the build directory. The installed
-# Glibc module map and header do not need them.
+# libc module map and header do not need them.
 do_install:append() {
     find ${D}${libdir}/swift \( -name '*.modulemap' -o -name '*.h' \) -type f \
         -exec sed -i '/^\/\/ ###sourceLocation(file: /d' {} +
@@ -142,11 +166,12 @@ do_install:append() {
 # (swiftToCxx) are not part of any install component; install them like the
 # swift.org toolchains ship them.
 do_install:append() {
-    install -d ${D}${libdir}/swift/linux ${D}${libdir}/swift/swiftToCxx
-    cp -R --no-dereference --preserve=mode,links ${B}/lib/swift/linux/Cxx.swiftmodule ${B}/lib/swift/linux/CxxStdlib.swiftmodule ${D}${libdir}/swift/linux/
-    install -m 0644 ${B}/lib/swift/linux/libswiftCxx.a ${B}/lib/swift/linux/libswiftCxxStdlib.a ${D}${libdir}/swift/linux/
-    for f in ${B}/lib/swift/linux/libcxx*; do
-        [ -e "$f" ] && install -m 0644 "$f" ${D}${libdir}/swift/linux/
+    platform=${SWIFT_PLATFORM}
+    install -d ${D}${libdir}/swift/$platform ${D}${libdir}/swift/swiftToCxx
+    cp -R --no-dereference --preserve=mode,links ${B}/lib/swift/$platform/Cxx.swiftmodule ${B}/lib/swift/$platform/CxxStdlib.swiftmodule ${D}${libdir}/swift/$platform/
+    install -m 0644 ${B}/lib/swift/$platform/libswiftCxx.a ${B}/lib/swift/$platform/libswiftCxxStdlib.a ${D}${libdir}/swift/$platform/
+    for f in ${B}/lib/swift/$platform/libcxx*; do
+        [ -e "$f" ] && install -m 0644 "$f" ${D}${libdir}/swift/$platform/
     done
     install -m 0644 ${S}/lib/PrintAsClang/_SwiftCxxInteroperability.h \
                     ${S}/lib/PrintAsClang/_SwiftStdlibCxxOverlay.h \
@@ -157,10 +182,23 @@ do_install:append() {
 FILES:${PN}-dev += "${libdir}/swift/swiftToCxx"
 
 # Make the Swift runtime libraries visible to the dynamic loader.
-do_install:append() {
+do_install:append:libc-glibc() {
     install -d ${D}${sysconfdir}/ld.so.conf.d
-    echo "${libdir}/swift/linux" > ${D}${sysconfdir}/ld.so.conf.d/swift.conf
+    echo "${libdir}/swift/${SWIFT_PLATFORM}" > ${D}${sysconfdir}/ld.so.conf.d/swift.conf
 }
-FILES:${PN} += "${sysconfdir}/ld.so.conf.d/swift.conf"
+FILES:${PN}:append:libc-glibc = " ${sysconfdir}/ld.so.conf.d/swift.conf"
+# The header of fts, which the module map of musl includes.
+RDEPENDS:${PN}-dev:append:libc-musl = " fts-dev"
+
+# musl reads the library path from /etc/ld-musl-<arch>.path, which the musl
+# package owns.
+SWIFT_MUSL_LDSO_PATH = "${sysconfdir}/ld-musl-${@get_musl_loader_arch(d)}.path"
+pkg_postinst:${PN}:libc-musl() {
+    grep -qxF '${libdir}/swift/${SWIFT_PLATFORM}' $D${SWIFT_MUSL_LDSO_PATH} ||
+        echo '${libdir}/swift/${SWIFT_PLATFORM}' >> $D${SWIFT_MUSL_LDSO_PATH}
+}
+pkg_postrm:${PN}:libc-musl() {
+    sed -i '\#^${libdir}/swift/${SWIFT_PLATFORM}$#d' $D${SWIFT_MUSL_LDSO_PATH}
+}
 
 BBCLASSEXTEND = "nativesdk"
