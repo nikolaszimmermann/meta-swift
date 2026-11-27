@@ -48,7 +48,7 @@ SWIFT_DEBUG_PREFIX_MAP = "\
 # Code that needs the full path can still use #filePath.
 SWIFT_CONCISE_MAGIC_FILE = "-enable-upcoming-feature ConciseMagicFile"
 
-# On the target the Swift runtime lives in ${libdir}/swift/linux, which
+# On the target the Swift runtime lives in ${libdir}/swift/${SWIFT_PLATFORM}, which
 # swift-stdlib adds to the dynamic loader's search path. Don't let swiftc embed
 # an rpath into the build sysroot.
 SWIFTFLAGS ?= "\
@@ -82,6 +82,8 @@ SWIFTFLAGS:class-native = "\
     ${SWIFT_DEBUG_PREFIX_MAP} \
 "
 
+SWIFTFLAGS:append:libc-musl = " ${SWIFT_MUSL_XCC_FLAGS}"
+
 SWIFTFLAGS:remove:class-nativesdk = "-use-ld=lld"
 SWIFTFLAGS:append:class-nativesdk = " -use-ld=bfd ${@swift_sdk_dynamic_linker_flags(d)}"
 
@@ -97,7 +99,7 @@ CXXFLAGS:append = " ${SWIFT_CXX_INTEROP_INCLUDES}"
 
 # Libraries built with Swift depend on the Swift runtime, which is not in the
 # default library path: let the linker find it when linking their users.
-TARGET_LDFLAGS:append:class-target = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/linux"
+TARGET_LDFLAGS:append:class-target = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/${SWIFT_PLATFORM}"
 LDFLAGS:append:class-nativesdk = " -Wl,-rpath-link,${STAGING_LIBDIR}/swift/linux"
 LDFLAGS:append:class-native = " -Wl,-rpath-link,${STAGING_LIBDIR_NATIVE}/swift/linux"
 

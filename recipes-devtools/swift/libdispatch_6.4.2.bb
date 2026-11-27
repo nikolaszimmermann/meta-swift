@@ -19,7 +19,7 @@ SRC_URI = "\
 "
 S = "${SWIFT_LIBDISPATCH_SRCDIR}"
 
-inherit cmake
+inherit cmake swift-triple
 
 EXTRA_OECMAKE = "\
     -DCMAKE_BUILD_TYPE=Release \
@@ -27,12 +27,27 @@ EXTRA_OECMAKE = "\
     -DBUILD_TESTING=OFF \
     -DBUILD_SHARED_LIBS=ON \
 "
+# musl declares program_invocation_short_name in errno.h only with
+# _GNU_SOURCE, which the CMake check of libdispatch leaves out, although it is
+# what the check turns on. Without it, getprogname() has no implementation.
+EXTRA_OECMAKE:append:libc-musl = " -DHAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME=1"
+# On musl, sys/cdefs.h comes from bsd-headers, which warns that it is
+# non-standard, and libdispatch builds with -Werror. It needs the BSD macros
+# of the header, so only drop the warning.
+CFLAGS:append:libc-musl = " -Wno-#warnings"
+CXXFLAGS:append:libc-musl = " -Wno-#warnings"
 
 do_install:append() {
     install -d ${D}${libdir}/cmake/dispatch
     sed -e 's#@LIBDIR@#${@os.path.relpath(d.getVar('libdir'), d.getVar('prefix'))}#g' \
         -e 's#@INCLUDEDIR@#${@os.path.relpath(d.getVar('includedir'), d.getVar('prefix'))}#g' \
         ${SWIFT_UNPACKDIR}/dispatchConfig.cmake > ${D}${libdir}/cmake/dispatch/dispatchConfig.cmake
+}
+
+# The Swift overlay that dispatchConfig.cmake describes is in the platform
+# directory, which is musl on musl.
+do_install:append:libc-musl() {
+    sed -i 's#/swift/linux#/swift/${SWIFT_PLATFORM}#g' ${D}${libdir}/cmake/dispatch/dispatchConfig.cmake
 }
 
 FILES:${PN}-dev += "${libdir}/cmake/dispatch"

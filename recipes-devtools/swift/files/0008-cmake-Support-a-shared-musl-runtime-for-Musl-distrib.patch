@@ -1,0 +1,203 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Nikolas Zimmermann <nzimmermann@igalia.com>
+Date: Fri, 27 Nov 2026 04:40:22 +0100
+Subject: [PATCH] cmake: Support a shared musl runtime for Musl distributions
+
+The Musl SDK (LINUX_STATIC) is the fully static Linux SDK: static only,
+for <arch>-swift-linux-musl, against libc++, in lib/swift/linux-static.
+A distribution built on Musl, such as Yocto/OpenEmbedded with
+TCLIBC = "musl" or Alpine, uses shared libraries, its own triple
+(aarch64-poky-linux-musl) and the libstdc++ of its GCC. For such a triple
+the compiler and swift-driver already look for the runtime in
+lib/swift/musl (the "musl" platform), dynamically linked.
+
+Add SWIFT_MUSL_DISTRIBUTION. With it, the Musl SDK is built shared as
+well, keeps the triple and sysroot of the build configuration
+(SWIFT_SDK_LINUX_STATIC_ARCH_<arch>_TRIPLE and _PATH), uses libstdc++ for
+the C++ overlay and is installed in lib/swift/musl. Its module map
+(musl-distribution.modulemap) puts the upstream Musl headers into a
+single module, like glibc.modulemap, since musl.modulemap needs the
+modular headers of the Musl of the static SDK. Like glibc.modulemap, it
+needs -fbuiltin-headers-in-system-modules, which the build passes with
+-Xcc.
+
+Such a build has LINUX as the host SDK, since Swift only configures the
+Musl SDK next to it, and LINUX_STATIC as the primary SDK. With an
+installed libdispatch (dispatch_DIR), the dispatch targets are created
+for the host and the primary SDK, but only the host SDK was left out of
+the bundled libdispatch builds, which then failed on the names that
+already exist. Leave out the primary SDK too.
+
+Upstream-Status: Pending
+Signed-off-by: Nikolas Zimmermann <nzimmermann@igalia.com>
+---
+ CMakeLists.txt                                |  8 +++++
+ cmake/modules/Libdispatch.cmake               |  3 +-
+ cmake/modules/SwiftCXXUtils.cmake             |  4 +++
+ cmake/modules/SwiftConfigureSDK.cmake         | 13 +++++--
+ stdlib/public/Platform/CMakeLists.txt         | 11 ++++--
+ .../Platform/musl-distribution.modulemap      | 36 +++++++++++++++++++
+ 6 files changed, 70 insertions(+), 5 deletions(-)
+ create mode 100644 stdlib/public/Platform/musl-distribution.modulemap
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c47789bc..1d163976 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -552,6 +552,14 @@ defaults to the default install location for Musl.")
+ set(SWIFT_SDK_LINUX_STATIC_ARCHITECTURES "" CACHE STRING
+   "The architectures to configure when using the static Linux SDK.")
+ 
++option(SWIFT_MUSL_DISTRIBUTION
++  "Build the Musl SDK (LINUX_STATIC) for a distribution built on Musl instead \
++of the fully static Linux SDK: also shared, for the triple and sysroot set by \
++SWIFT_SDK_LINUX_STATIC_ARCH_<arch>_TRIPLE and _PATH, against libstdc++, and \
++installed in lib/swift/musl, where the compiler looks for the runtime of a \
++Musl triple without the swift vendor."
++  FALSE)
++
+ set(SWIFT_SDK_LINUX_ARCHITECTURES "" CACHE STRING
+   "The architectures to configure when using the Linux SDK.")
+ 
+diff --git a/cmake/modules/Libdispatch.cmake b/cmake/modules/Libdispatch.cmake
+index ff68c9ed..ca83aa4d 100644
+--- a/cmake/modules/Libdispatch.cmake
++++ b/cmake/modules/Libdispatch.cmake
+@@ -104,7 +104,8 @@ foreach(sdk ${SWIFT_SDKS})
+   if(NOT "${sdk}" IN_LIST SWIFT_DARWIN_PLATFORMS AND
+       NOT "${sdk}" STREQUAL "WASI" AND
+       NOT (SWIFT_LIBDISPATCH_USE_PACKAGE AND
+-           "${sdk}" STREQUAL "${SWIFT_HOST_VARIANT_SDK}"))
++           ("${sdk}" STREQUAL "${SWIFT_HOST_VARIANT_SDK}" OR
++            "${sdk}" STREQUAL "${SWIFT_PRIMARY_VARIANT_SDK}")))
+     list(APPEND DISPATCH_SDKS "${sdk}")
+   endif()
+ endforeach()
+diff --git a/cmake/modules/SwiftCXXUtils.cmake b/cmake/modules/SwiftCXXUtils.cmake
+index ea28fafd..16c4cd3b 100644
+--- a/cmake/modules/SwiftCXXUtils.cmake
++++ b/cmake/modules/SwiftCXXUtils.cmake
+@@ -3,3 +3,7 @@ set(SWIFT_LIBSTDCXX_PLATFORMS
+     "LINUX"
+     "CYGWIN"
+     "HAIKU")
++# A Musl distribution uses the libstdc++ of its GCC, like LINUX.
++if(SWIFT_MUSL_DISTRIBUTION)
++  list(APPEND SWIFT_LIBSTDCXX_PLATFORMS "LINUX_STATIC")
++endif()
+diff --git a/cmake/modules/SwiftConfigureSDK.cmake b/cmake/modules/SwiftConfigureSDK.cmake
+index 4eea0fe1..9ad98a3e 100644
+--- a/cmake/modules/SwiftConfigureSDK.cmake
++++ b/cmake/modules/SwiftConfigureSDK.cmake
+@@ -299,6 +299,9 @@ macro(configure_sdk_unix name architectures)
+ 
+   set(SWIFT_SDK_${prefix}_NAME "${name}")
+   set(SWIFT_SDK_${prefix}_LIB_SUBDIR "${platform}")
++  if("${prefix}" STREQUAL "LINUX_STATIC" AND SWIFT_MUSL_DISTRIBUTION)
++    set(SWIFT_SDK_${prefix}_LIB_SUBDIR "musl")
++  endif()
+   set(SWIFT_SDK_${prefix}_ARCHITECTURES "${architectures}")
+   if("${prefix}" STREQUAL "CYGWIN")
+     set(SWIFT_SDK_${prefix}_OBJECT_FORMAT "COFF")
+@@ -337,8 +340,8 @@ macro(configure_sdk_unix name architectures)
+     set(SWIFT_SDK_${prefix}_STATIC_LINKING_SUPPORTED FALSE)
+   endif()
+ 
+-  # For LINUX_STATIC, build static only
+-  if("${prefix}" STREQUAL "LINUX_STATIC")
++  # For LINUX_STATIC, build static only, unless it is for a Musl distribution
++  if("${prefix}" STREQUAL "LINUX_STATIC" AND NOT SWIFT_MUSL_DISTRIBUTION)
+     set(SWIFT_SDK_${prefix}_STATIC_ONLY TRUE)
+   else()
+     set(SWIFT_SDK_${prefix}_STATIC_ONLY FALSE)
+@@ -480,6 +483,12 @@ macro(configure_sdk_unix name architectures)
+         endif()
+       elseif("${prefix}" STREQUAL "EMSCRIPTEN")
+         set(SWIFT_SDK_EMSCRIPTEN_ARCH_${arch}_TRIPLE "${arch}-unknown-emscripten")
++      elseif("${prefix}" STREQUAL "LINUX_STATIC" AND SWIFT_MUSL_DISTRIBUTION)
++        # Keep the triple and the sysroot of the distribution, e.g.
++        # aarch64-poky-linux-musl.
++        if(NOT SWIFT_SDK_LINUX_STATIC_ARCH_${arch}_TRIPLE)
++          message(FATAL_ERROR "SWIFT_MUSL_DISTRIBUTION needs SWIFT_SDK_LINUX_STATIC_ARCH_${arch}_TRIPLE")
++        endif()
+       elseif("${prefix}" STREQUAL "LINUX_STATIC")
+         set(SWIFT_SDK_LINUX_STATIC_ARCH_${arch}_TRIPLE "${arch}-swift-linux-musl")
+         set(SWIFT_SDK_LINUX_STATIC_ARCH_${arch}_PATH "${SWIFT_MUSL_PATH}/${arch}")
+diff --git a/stdlib/public/Platform/CMakeLists.txt b/stdlib/public/Platform/CMakeLists.txt
+index c185e423..3ee56a2f 100644
+--- a/stdlib/public/Platform/CMakeLists.txt
++++ b/stdlib/public/Platform/CMakeLists.txt
+@@ -89,6 +89,13 @@ foreach(sdk ${SWIFT_SDKS})
+ 
+   set(musl_modulemap "musl.modulemap")
+   set(musl_header "SwiftMusl.h")
++  # The headers of a Musl distribution are those of upstream Musl, not the
++  # modular ones that musl.modulemap needs.
++  if(SWIFT_MUSL_DISTRIBUTION)
++    set(musl_modulemap_source "${CMAKE_CURRENT_LIST_DIR}/musl-distribution.modulemap")
++  else()
++    set(musl_modulemap_source "${CMAKE_CURRENT_LIST_DIR}/${musl_modulemap}")
++  endif()
+ 
+   foreach(arch ${SWIFT_SDK_${sdk}_ARCHITECTURES})
+     set(arch_subdir "${SWIFT_SDK_${sdk}_LIB_SUBDIR}/${arch}")
+@@ -106,7 +113,7 @@ foreach(sdk ${SWIFT_SDKS})
+         "${CMAKE_COMMAND}" "-E" "make_directory" ${module_dir}
+       COMMAND
+         "${CMAKE_COMMAND}" "-E" "copy"
+-          ${CMAKE_CURRENT_LIST_DIR}/${musl_modulemap}
++          ${musl_modulemap_source}
+           ${musl_modulemap_out}
+       COMMAND
+         "${CMAKE_COMMAND}" "-E" "copy"
+@@ -124,7 +131,7 @@ foreach(sdk ${SWIFT_SDKS})
+           "${CMAKE_COMMAND}" "-E" "make_directory" ${module_dir_static}
+         COMMAND
+           "${CMAKE_COMMAND}" "-E" "copy"
+-            ${CMAKE_CURRENT_LIST_DIR}/${musl_modulemap}
++            ${musl_modulemap_source}
+             ${musl_modulemap_out_static}
+         COMMAND
+           "${CMAKE_COMMAND}" "-E" "copy"
+diff --git a/stdlib/public/Platform/musl-distribution.modulemap b/stdlib/public/Platform/musl-distribution.modulemap
+new file mode 100644
+index 00000000..dff3f16f
+--- /dev/null
++++ b/stdlib/public/Platform/musl-distribution.modulemap
+@@ -0,0 +1,36 @@
++//===--- musl-distribution.modulemap --------------------------------------===//
++//
++// This source file is part of the Swift.org open source project
++//
++// Copyright (c) 2014 - 2026 Apple Inc. and the Swift project authors
++// Licensed under Apache License v2.0 with Runtime Library Exception
++//
++// See https://swift.org/LICENSE.txt for license information
++// See https://swift.org/CONTRIBUTORS.txt for the list of Swift project authors
++//
++//===----------------------------------------------------------------------===//
++
++// The module map of a distribution built on Musl (SWIFT_MUSL_DISTRIBUTION).
++// Its headers are those of upstream Musl, so unlike musl.modulemap this one
++// puts the C library into a single module, like glibc.modulemap. Like that
++// one, it needs the Clang builtin headers to join the system modules
++// (-fbuiltin-headers-in-system-modules) to avoid module cycles.
++
++// <fts.h> is not part of Musl, it comes from musl-fts. Like musl.modulemap,
++// give it a module of its own: other modules include it as well, and the
++// declarations must come from the module that SwiftMusl re-exports.
++module fts [system] {
++  header "fts.h"
++  export *
++
++  link "fts"
++}
++
++module SwiftMusl [system] {
++  header "SwiftMusl.h"
++
++  // <assert.h>'s use of NDEBUG requires textual inclusion.
++  textual header "assert.h"
++
++  export *
++}

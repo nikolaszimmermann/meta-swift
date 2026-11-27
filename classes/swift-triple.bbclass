@@ -12,6 +12,19 @@ SWIFT_TARGET = "${@oe.utils.conditional('HOST_ARCH', 'arm', d.getVar('HOST_SYS')
 # swift-native builds its standard library for the generic triple.
 SWIFT_TARGET:class-native = "${BUILD_ARCH}-unknown-linux-gnu"
 
+# The directory of the Swift runtime and its modules, lib/swift/<platform>,
+# named by the compiler after the triple: musl for a musl triple (other than
+# the swift vendor of the static Linux SDK), linux otherwise. Only the target
+# can be on musl, the build and SDK hosts are on glibc.
+SWIFT_PLATFORM = "linux"
+SWIFT_PLATFORM:libc-musl = "musl"
+
+# The module map of the C library of a musl target (musl-distribution.modulemap,
+# see swift-stdlib) puts it into a single module, like the Glibc one. Both need
+# the Clang builtin headers in the system modules, which the compiler only
+# passes to the importer by itself for glibc.
+SWIFT_MUSL_XCC_FLAGS = "-Xcc -Xclang -Xcc -fbuiltin-headers-in-system-modules"
+
 # Only the tune (-mcpu, -mfloat-abi, ...) flags: they change the ABI and the
 # available intrinsics, so the importer must see them. Optimization and
 # hardening flags are for the C/C++ compilers.

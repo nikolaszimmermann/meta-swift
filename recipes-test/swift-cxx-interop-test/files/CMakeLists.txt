@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.26)
 project(SwiftCxxInteropTest LANGUAGES C CXX Swift)
 
+# The directory of the Swift runtime in the sysroot: lib/swift/<platform>.
+set(SWIFT_PLATFORM "linux" CACHE STRING "Platform directory of the Swift runtime")
+
 # A C++ library, imported into Swift through a module map.
 add_library(Greeter STATIC Greeter.cpp)
 target_include_directories(Greeter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -28,7 +31,7 @@ set_source_files_properties(main.cpp PROPERTIES
 target_include_directories(swift-cxx-interop-test PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 # The generated header inlines calls into the Swift runtime, so a C++
 # consumer links it directly.
-target_link_directories(swift-cxx-interop-test PRIVATE ${CMAKE_SYSROOT}/usr/lib/swift/linux)
+target_link_directories(swift-cxx-interop-test PRIVATE ${CMAKE_SYSROOT}/usr/lib/swift/${SWIFT_PLATFORM})
 target_link_libraries(swift-cxx-interop-test PRIVATE SwiftGreeter swiftCore)
 
 install(TARGETS swift-hello swift-cxx-interop-test SwiftGreeter

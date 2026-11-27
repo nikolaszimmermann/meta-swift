@@ -1,0 +1,15 @@
+# aarch64 with musl instead of glibc, like the musl build in the CI of
+# meta-webkit
+#
+#   kas-container build ci/kas/wrynose-qemuarm64-musl.yml
+
+header:
+  version: 14
+  includes:
+    - ci/kas/wrynose.yml
+
+machine: qemuarm64
+
+local_conf_header:
+  musl: |
+    TCLIBC = "musl"

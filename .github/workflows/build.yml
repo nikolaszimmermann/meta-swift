@@ -50,6 +50,7 @@ jobs:
           - wrynose-qemuarm64
           - wrynose-qemuarm
           - wrynose-qemux86-64
+          - wrynose-qemuarm64-musl
     steps:
       - uses: actions/checkout@v7
 
@@ -155,18 +156,13 @@ jobs:
 
       - name: Trim the build directory
         run: |
-          # rm_work only cleans the work directories of the recipes that the
-          # targets reach through do_build. Those that only do_populate_sdk
-          # pulls in (the SDK host recipes), and the image, which is
-          # excluded from rm_work, would keep tens of GB in the build
-          # directory, which persists across runs. Clean them now that the
-          # tests are done. The next run restores them from sstate. After a
-          # failure they stay for the logs, and the next successful job of the
-          # configuration cleans them.
+          # The build directory persists across runs. Clean the work
+          # directories that rm_work left, now that the tests are done. After
+          # a failure they stay for the logs, and the next successful job of
+          # the configuration cleans them.
           set -o pipefail
           "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
-            shell "ci/kas/${{ matrix.config }}.yml" \
-            -c "bitbake --runall=rm_work core-image-minimal:do_populate_sdk && bitbake -c clean core-image-minimal" 2>&1 |
+            shell "ci/kas/${{ matrix.config }}.yml" -c /repo/ci/trim-build-dir.sh 2>&1 |
             tee -a "$RUNNER_TEMP/build.log"
 
       - name: Stop the build container

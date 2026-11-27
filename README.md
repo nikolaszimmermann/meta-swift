@@ -16,6 +16,7 @@ untouched.
 | LLVM            | 21.1, [swiftlang/llvm-project](https://github.com/swiftlang/llvm-project) |
 | Yocto releases  | scarthgap, wrynose (built and tested)               |
 | Targets         | aarch64, armv7 (hard-float), x86_64                 |
+| C library       | glibc, musl (target)                                |
 | Build/SDK hosts | x86_64, aarch64                                     |
 
 **Contents:** [Quick start](#quick-start) ·
@@ -199,6 +200,13 @@ releases in between.
 | ----------------------------------- | ------------------- |
 | aarch64, armv7 (hard-float), x86_64 | x86_64, aarch64     |
 
+The target can use musl (`TCLIBC = "musl"`) instead of glibc. The CI builds
+and tests that on aarch64 with wrynose, like the CI of meta-webkit. Swift
+itself only builds musl as its fully static Linux SDK. Here the runtime is
+built shared, for the triple of the distribution, in `lib/swift/musl`, where
+the compiler looks for it (`SWIFT_PLATFORM`, patch 0008 of swift-stdlib).
+The build and SDK hosts stay on glibc.
+
 ### Limitations
 
 - lldb cannot debug Swift code. `swift-llvm` builds no lldb, and there is no
@@ -244,7 +252,7 @@ against it. The badges at the top show their state on `main`.
 
 There is one job per kas configuration: scarthgap and wrynose, each with
 qemuarm64, qemuarm and qemux86-64, i.e. aarch64, ARMv7 hard-float and
-x86_64. `ci/kas/common.yml` holds what the releases share. The build is far
+x86_64, plus wrynose-qemuarm64-musl with musl instead of glibc. `ci/kas/common.yml` holds what the releases share. The build is far
 too large for GitHub-hosted runners, so it runs on a self-hosted runner
 labelled `meta-swift`. Each job:
 
@@ -260,7 +268,9 @@ labelled `meta-swift`. Each job:
    `swift-cxx-interop-test` and the program from the SDK
    ([`swift_sdk.py`](lib/oeqa/runtime/cases/swift_sdk.py)) on it,
 6. cleans the work directories that `rm_work` leaves, those of the SDK host
-   recipes and of the image, so that the build directory stays small,
+   recipes, of the QEMU and of the image, with `bitbake -c clean`, so that the
+   build directory stays small without building anything
+   ([`ci/trim-build-dir.sh`](ci/trim-build-dir.sh)),
 7. fails when bitbake reports a non-deterministic task hash, since that
    breaks sstate reuse, even if every task succeeded,
 8. on failure, uploads the logs of failed tasks and the QEMU test logs as
