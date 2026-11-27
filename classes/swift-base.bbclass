@@ -22,9 +22,7 @@ python () {
                  % (d.getVar('PN'), d.getVar('TOOLCHAIN')))
 }
 
-DEPENDS:append:class-target = " swift-native"
-DEPENDS:append:class-nativesdk = " swift-native"
-DEPENDS:append:class-native = " swift-native"
+DEPENDS:append = " swift-native"
 
 SWIFTC = "${STAGING_BINDIR_NATIVE}/swiftc"
 

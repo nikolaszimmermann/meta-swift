@@ -191,7 +191,9 @@ FILES:${PN}:append:libc-glibc = " ${sysconfdir}/ld.so.conf.d/swift.conf"
 RDEPENDS:${PN}-dev:append:libc-musl = " fts-dev"
 
 # musl reads the library path from /etc/ld-musl-<arch>.path, which the musl
-# package owns.
+# package owns. It has no include directory like ld.so.conf.d, so add the
+# runtime to the file itself. An upgrade of musl on the device writes the file
+# anew and drops the line: reinstall swift-stdlib after one.
 SWIFT_MUSL_LDSO_PATH = "${sysconfdir}/ld-musl-${@get_musl_loader_arch(d)}.path"
 pkg_postinst:${PN}:libc-musl() {
     grep -qxF '${libdir}/swift/${SWIFT_PLATFORM}' $D${SWIFT_MUSL_LDSO_PATH} ||

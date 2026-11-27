@@ -185,8 +185,10 @@ jobs:
           exit 1
 
       - name: Mark the build directory as clean
-        # Every bitbake of this job ended on its own, also on a failed task,
-        # so the next job can reuse TMPDIR.
+        # Only a cancel stops bitbake in the middle of a task, so without one
+        # the next job can reuse TMPDIR, also after a failed task. A crash of
+        # bitbake itself fails the step like a failed task and is not
+        # detected.
         if: ${{ !cancelled() }}
         run: touch "$KAS_BUILD_DIR/clean-shutdown"
 

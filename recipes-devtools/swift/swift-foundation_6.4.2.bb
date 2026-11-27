@@ -63,19 +63,7 @@ DEBUG_PREFIX_MAP:append = " ${@swift_foundation_prefix_maps(d, '-fdebug-prefix-m
 SWIFT_DEBUG_PREFIX_MAP:append = " ${@swift_foundation_prefix_maps(d, '-file-prefix-map %s')}"
 
 FILES:${PN} = "${libdir}/swift/${SWIFT_PLATFORM}/lib*${SOLIBSDEV}"
-# Everything but the runtime libraries: modules, module maps and headers.
-# lib/swift/[!lm]* is all of lib/swift but the platform directory (linux or
-# musl).
-FILES:${PN}-dev = "\
-    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftmodule \
-    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftdoc \
-    ${libdir}/swift/${SWIFT_PLATFORM}/*.swiftinterface \
-    ${libdir}/swift/${SWIFT_PLATFORM}/${SWIFT_TARGET_ARCH} \
-    ${libdir}/swift/[!lm]* \
-    ${libdir}/swift/lib*.a \
-    ${libdir}/swift/${SWIFT_PLATFORM}/*.a \
-    ${libdir}/cmake \
-"
+FILES:${PN}-dev = "${SWIFT_MODULE_DEV_FILES}"
 # nooelint: oelint.vars.insaneskip
 INSANE_SKIP:${PN} = "dev-so"
 

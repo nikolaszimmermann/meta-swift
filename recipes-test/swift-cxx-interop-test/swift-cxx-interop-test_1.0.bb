@@ -24,7 +24,7 @@ S = "${@d.getVar('UNPACKDIR') or d.getVar('WORKDIR')}"
 
 inherit swift-cmake ptest
 
-EXTRA_OECMAKE += "-DSWIFT_PLATFORM=${SWIFT_PLATFORM}"
+EXTRA_OECMAKE += "-DSWIFT_RUNTIME_DIR=${libdir}/swift/${SWIFT_PLATFORM}"
 
 FILES:${PN} += "${libdir}/libSwiftGreeter.so"
 FILES_SOLIBSDEV = ""

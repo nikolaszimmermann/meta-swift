@@ -31,15 +31,7 @@ set(CMAKE_PROJECT_INCLUDE ${WORKDIR}/swift-project-include.cmake)
 SWIFTEOF
 }
 
-cmake_do_generate_toolchain_file:append:class-target() {
-    swift_extend_toolchain_file
-}
-
-cmake_do_generate_toolchain_file:append:class-nativesdk() {
-    swift_extend_toolchain_file
-}
-
-cmake_do_generate_toolchain_file:append:class-native() {
+cmake_do_generate_toolchain_file:append() {
     swift_extend_toolchain_file
 }
 
