@@ -29,8 +29,9 @@ def swift_sdk_clang_flags(d, var):
 SWIFT_SDK_CLANGCC_ARCH = "${@swift_sdk_clang_flags(d, 'TARGET_CC_ARCH')}"
 SWIFT_TUNE_CCARGS = "${@swift_sdk_clang_flags(d, 'TUNE_CCARGS')}"
 SWIFT_SDK_CLANG = "$OECORE_NATIVE_SYSROOT${prefix_nativesdk}/libexec/swift-llvm/bin"
-SWIFT_SDK_XCC_FLAGS = "${@swift_xcc_flags(d)}"
-SWIFT_SDK_XCC_FLAGS:append:libc-musl = " ${SWIFT_MUSL_XCC_FLAGS}"
+# The libc-musl override does not apply here: cross-canadian sets the libc
+# overrides to the one of the SDK host. Ask the target C library directly.
+SWIFT_SDK_XCC_FLAGS = "${@swift_xcc_flags(d)} ${@d.getVar('SWIFT_MUSL_XCC_FLAGS') if d.getVar('TCLIBC') == 'musl' else ''}"
 
 create_sdk_files:append:swiftllvm() {
     if ${@bb.utils.contains('SWIFTSDK', '1', 'true', 'false', d)}; then
