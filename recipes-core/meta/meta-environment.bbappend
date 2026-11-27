@@ -7,8 +7,6 @@
 # finds the C++ interop support headers of the runtime, like swift-base.
 inherit swift-triple
 
-SWIFTSDK ??= "1"
-
 # meta-environment is built for the SDK host (HOST_SYS); the environment
 # describes the target.
 SWIFT_SDK_TARGET = "${@oe.utils.conditional('TARGET_ARCH', 'arm', d.getVar('TARGET_SYS').replace('arm-', 'armv7-', 1) + 'hf', d.getVar('TARGET_SYS'), d)}"

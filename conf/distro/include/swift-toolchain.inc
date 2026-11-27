@@ -16,4 +16,8 @@
 SWIFT_UNIFIED_LLVM = "1"
 OVERRIDES .= ":swiftllvm"
 
+# Put Swift into the SDKs of the images: the compiler and the runtime with its
+# -dev packages. Set it to "0" to leave the SDKs as they are.
+SWIFTSDK ??= "1"
+
 require conf/distro/include/swift-clang-toolchain.inc
