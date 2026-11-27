@@ -19,8 +19,9 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/swift-llvm:"
 # The OE patch series of meta-clang (LLVM 20), rebased onto the fork. 0029
 # (MIPS O32 stat sizes, no Swift target) and 0036 (ppc64 musl build fix,
 # already part of the fork) are dropped. The order is the one the series was
-# rebased in. The patches from 0100 on belong to this layer. Patches for
-# subprojects that are not built here (compiler-rt, libcxx, lldb) do nothing.
+# rebased in. The patches from 0100 on belong to this layer. The patches of the
+# series for subprojects that are not built here (compiler-rt, libcxx, lldb)
+# do nothing, and the layer adds none for them.
 SRC_URI = "\
     git://github.com/swiftlang/llvm-project.git;protocol=https;nobranch=1;destsuffix=llvm-project-${SWIFT_TAG} \
     file://0001-libcxxabi-Find-libunwind-headers-when-LIBCXXABI_LIBU.patch \
@@ -57,9 +58,7 @@ SRC_URI = "\
     file://0019-llvm-Insert-anchor-for-adding-OE-distro-vendor-names.patch \
     file://0024-Fix-lib-paths-for-OpenEmbedded-Host.patch \
     file://0005-llvm-allow-env-override-of-exe-and-libdir-path.patch \
-    file://0100-lldb-Only-install-the-copied-clang-resource-director.patch \
     file://0101-clang-Prefer-sysroot-usr-for-GCC-in-usrmerge-sysroots.patch \
-    file://0102-lldb-Fix-the-VirtualDataExtractor-build-for-32-bit-t.patch \
     file://0103-clang-Find-the-OpenEmbedded-GCC-for-32-bit-hard-floa.patch \
 "
 SRCREV = "${SWIFT_LLVM_SRCREV}"
