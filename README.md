@@ -118,12 +118,15 @@ flowchart TD
     swift["swift-native<br/>6.4"]
 
     bllvm --> s0 --> s1 --> s2 --> s3 --> swift
+    bllvm --> s1
+    bllvm --> s2
     clang --> s3
     clang --> swift
 ```
 
 Each arrow points from a recipe to the one it builds or is built into. The
-bootstrap stages are never packaged. Only `swift-native` and what it builds
+bootstrap LLVM compiles stages 0 to 2 and is embedded in them. The bootstrap
+stages are never packaged. Only `swift-native` and what it builds
 are.
 
 ### Build host, SDK host, target
@@ -134,7 +137,7 @@ three machines:
 ```mermaid
 flowchart LR
     subgraph build["Build host, runs bitbake"]
-        native["swift-llvm-native<br/>swift-native<br/>swift-driver-native<br/>swift-foundation-macros-native<br/>cmake-swift-native"]
+        native["swift-llvm-native<br/>swift-native<br/>swift-driver-native<br/>swift-foundation-native<br/>swift-foundation-macros-native<br/>swift-dispatch-native<br/>libdispatch-native<br/>cmake-swift-native"]
     end
     subgraph sdk["SDK host, runs the SDK"]
         nsdk["nativesdk-swift-llvm<br/>nativesdk-swift<br/>nativesdk-swift-driver<br/>nativesdk-swift-stdlib<br/>nativesdk-swift-foundation<br/>nativesdk-swift-dispatch<br/>nativesdk-libdispatch"]
@@ -217,8 +220,8 @@ The build and SDK hosts stay on glibc.
 ### Resources
 
 A cold build compiles LLVM several times (swift-llvm for the build host and
-the SDK host, the Swift bootstrap LLVM) plus five Swift compiler builds, and
-takes many hours. Images that also use the clang of the distribution build
+the SDK host, the Swift bootstrap LLVM) plus six Swift compiler builds (five
+for the build host, one for the SDK host), and takes many hours. Images that also use the clang of the distribution build
 that one as well. Several LLVM builds run at once, at up to 2 GB per C++ compiler
 process.
 
@@ -328,6 +331,7 @@ comes from meta-clang, rebased onto the fork.
 | swift | [0005](recipes-devtools/swift/files/0005-SwiftCompilerSources-Use-SwiftShims-from-SWIFT_PATH_.patch) | Takes SwiftShims only from `SWIFT_PATH_TO_SWIFT_SDK` when building against the runtime of another SDK. |
 | swift | [0006](recipes-devtools/swift/files/0006-ClangImporter-Do-not-track-files-injected-into-the-C.patch) | Does not record the module maps injected into the Clang VFS as dependencies, which broke rebuilding modules such as Cxx. |
 | swift | [0007](recipes-devtools/swift/files/0007-runtime-Fix-the-crash-handler-build-for-32-bit-ARM-L.patch) | Fixes the crash handler build for 32-bit ARM Linux. |
+| swift | [0008](recipes-devtools/swift/files/0008-cmake-Support-a-shared-musl-runtime-for-Musl-distrib.patch) | Builds a shared runtime in `lib/swift/musl` for a distribution on musl, with its own triple and libstdc++, next to the fully static Linux SDK. |
 | swift-corelibs-libdispatch | [0001](recipes-devtools/swift/libdispatch/0001-benchmark-Make-the-integer-to-floating-point-convers.patch) | Makes integer to floating point conversions in the benchmark explicit, which fixes the `-Werror` build on 32-bit targets. |
 | swift-driver | [valid-module-names](recipes-devtools/swift/swift-driver/swift-driver-valid-module-names.patch) | Gives the executables valid Swift module names, as swift-driver rejects names like `swift-help`. |
 
