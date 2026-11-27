@@ -9,7 +9,7 @@ inherit swift-triple
 
 # meta-environment is built for the SDK host (HOST_SYS); the environment
 # describes the target.
-SWIFT_SDK_TARGET = "${@oe.utils.conditional('TARGET_ARCH', 'arm', d.getVar('TARGET_SYS').replace('arm-', 'armv7-', 1) + 'hf', d.getVar('TARGET_SYS'), d)}"
+SWIFT_SDK_TARGET = "${@swift_triple(d.getVar('TARGET_ARCH'), d.getVar('TARGET_SYS'))}"
 SWIFT_SDK_DYLD_PREFIX_FLAGS = "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-Xclang-linker --dyld-prefix=/usr', '', d)}"
 
 # The tune flags for clang: without the gcc flags that clang does not take,

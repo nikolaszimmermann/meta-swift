@@ -3,12 +3,15 @@
 # the SDK environment.
 
 # The Swift triple of the machine the code runs on (HOST_SYS: the target for
-# target recipes, the SDK host for nativesdk ones). Yocto's triple is used as is,
-# except on 32-bit arm where the bare
-# "arm" arch is not a Swift platform and the hard-float ABI has to be in the
-# triple (Yocto conveys it through -mfloat-abi=hard instead).
+# target recipes, the SDK host for nativesdk ones). The Yocto triple is used as
+# is, except on 32-bit arm, where the bare "arm" arch is not a Swift platform
+# and the hard-float ABI has to be in the triple (Yocto conveys it through
+# -mfloat-abi=hard instead).
+def swift_triple(arch, sys):
+    return sys.replace('arm-', 'armv7-', 1) + 'hf' if arch == 'arm' else sys
+
 SWIFT_TARGET_ARCH = "${@oe.utils.conditional('HOST_ARCH', 'arm', 'armv7', d.getVar('HOST_ARCH'), d)}"
-SWIFT_TARGET = "${@oe.utils.conditional('HOST_ARCH', 'arm', d.getVar('HOST_SYS').replace('arm-', 'armv7-', 1) + 'hf', d.getVar('HOST_SYS'), d)}"
+SWIFT_TARGET = "${@swift_triple(d.getVar('HOST_ARCH'), d.getVar('HOST_SYS'))}"
 # That triple only fits ARMv7 and newer with the hard-float ABI, the only
 # 32-bit arm that Swift supports: skip the Swift recipes of the target for
 # other tunes and for big-endian arm. The tune adds its architecture, such as

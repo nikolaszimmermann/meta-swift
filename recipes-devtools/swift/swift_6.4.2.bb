@@ -13,24 +13,17 @@ SRC_URI += "\
 "
 
 EXTRA_OECMAKE += "\
-    -DSWIFT_ENABLE_SWIFT_IN_SWIFT=ON \
-    -DSWIFT_BUILD_SWIFT_SYNTAX=ON \
-    -DSWIFT_PATH_TO_SWIFT_SYNTAX_SOURCE=${SWIFT_SYNTAX_SRCDIR} \
-    -DSWIFT_PATH_TO_STRING_PROCESSING_SOURCE=${SWIFT_STRING_PROCESSING_SRCDIR} \
-    -DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=ON \
-    -DSWIFT_ENABLE_EXPERIMENTAL_OBSERVATION=ON \
+    ${SWIFT_IN_SWIFT_OECMAKE} \
     -DSWIFT_ENABLE_EXPERIMENTAL_DISTRIBUTED=ON \
     -DSWIFT_ENABLE_EXPERIMENTAL_DIFFERENTIABLE_PROGRAMMING=ON \
     -DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=ON \
-    -DSWIFT_ENABLE_SYNCHRONIZATION=ON \
     -DSWIFT_ENABLE_VOLATILE=ON \
     -DSWIFT_ENABLE_BACKTRACING=ON \
     -DSWIFT_ENABLE_RUNTIME_MODULE=ON \
 "
 SWIFT_BUILD_COMPILER_DIR:class-native = "${STAGING_DIR_NATIVE}${libexecdir_native}/swift-stage3"
-EXTRA_OECMAKE:append:class-native = " -DCMAKE_Swift_COMPILER=${SWIFT_BUILD_COMPILER_DIR}/bin/swiftc"
 
-SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;stdlib;sdk-overlay;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib;license"
+SWIFT_INSTALL_COMPONENTS = "${SWIFT_IN_SWIFT_INSTALL_COMPONENTS};license"
 
 # The SDK host compiler is cross-compiled: swift-native compiles its Swift
 # parts for the SDK host, the private clang (swiftclang toolchain) its C++
@@ -54,14 +47,9 @@ SWIFT_INSTALL_COMPONENTS:class-nativesdk = "autolink-driver;compiler;toolchain-t
 DEPENDS:append:class-nativesdk = " swift-native nativesdk-swift-stdlib nativesdk-swift-llvm nativesdk-libdispatch nativesdk-libxml2 nativesdk-zlib nativesdk-ncurses nativesdk-libedit nativesdk-util-linux"
 SWIFT_LLVM_PREFIX:class-nativesdk = "${STAGING_DIR_HOST}${libexecdir}/swift-llvm"
 EXTRA_OECMAKE:remove:class-nativesdk = "\
-    -DCMAKE_LINKER_TYPE=LLD \
     -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
     -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_PREFIX}/bin \
 "
-# CMake honours CMAKE_LINKER_TYPE from 3.29 on (scarthgap has 3.28, wrynose
-# 4.x), and it knows no BFD linker type for Swift. bfd is the default linker
-# of the toolchain anyway, and Swift links through SWIFT_USE_LINKER.
-SWIFT_SDK_HOST_LINKER_TYPE = "${@'' if 'wrynose' in (d.getVar('LAYERSERIES_CORENAMES') or '').split() else '-DCMAKE_LINKER_TYPE=BFD'}"
 EXTRA_OECMAKE:append:class-nativesdk = "\
     -DSWIFT_NATIVE_CLANG_TOOLS_PATH=${SWIFT_LLVM_BINDIR} \
     -DSWIFT_NATIVE_LLVM_TOOLS_PATH=${SWIFT_LLVM_BINDIR} \
@@ -73,7 +61,6 @@ EXTRA_OECMAKE:append:class-nativesdk = "\
     -DCMAKE_Swift_COMPILER_WORKS=ON \
     -DCMAKE_Swift_FLAGS='-sdk ${STAGING_DIR_HOST} -resource-dir ${STAGING_LIBDIR}/swift' \
     -DSWIFT_BUILD_STDLIB=OFF \
-    ${SWIFT_SDK_HOST_LINKER_TYPE} \
     -DSWIFT_USE_LINKER=bfd \
     -DSWIFT_PATH_TO_SWIFT_SDK=${STAGING_DIR_HOST} \
     -DSWIFT_COMPILER_SOURCES_SDK_FLAGS='-sdk;${STAGING_DIR_HOST};-resource-dir;${STAGING_LIBDIR}/swift' \

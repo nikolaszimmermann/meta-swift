@@ -27,11 +27,25 @@ SRC_URI = "\
 "
 SRC_URI_SWIFT_IN_SWIFT = "${SRC_URI_SWIFT_STRING_PROCESSING} ${SRC_URI_SWIFT_SYNTAX}"
 
+# The compilers from stage 1 on also build their parts written in Swift, with
+# swift-syntax and the regex parser of swift-experimental-string-processing.
+SWIFT_IN_SWIFT_OECMAKE = "\
+    -DSWIFT_ENABLE_SWIFT_IN_SWIFT=ON \
+    -DSWIFT_BUILD_SWIFT_SYNTAX=ON \
+    -DSWIFT_PATH_TO_SWIFT_SYNTAX_SOURCE=${SWIFT_SYNTAX_SRCDIR} \
+    -DSWIFT_PATH_TO_STRING_PROCESSING_SOURCE=${SWIFT_STRING_PROCESSING_SRCDIR} \
+    -DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=ON \
+    -DSWIFT_ENABLE_EXPERIMENTAL_OBSERVATION=ON \
+    -DSWIFT_ENABLE_SYNCHRONIZATION=ON \
+"
+SWIFT_IN_SWIFT_INSTALL_COMPONENTS = "autolink-driver;compiler;clang-resource-dir-symlink;stdlib;sdk-overlay;toolchain-tools;swift-syntax-lib;compiler-swift-syntax-lib"
+
 S = "${SWIFT_SRCDIR}"
 
 inherit cmake python3native
 
-# The bootstrap stage that builds this compiler, if any.
+# The bootstrap stage that builds this compiler, if any. Its swiftc compiles
+# the Swift parts.
 SWIFT_BUILD_COMPILER_DIR ?= ""
 
 # ld finds the dependencies of shared libraries through -rpath-link before
@@ -44,7 +58,7 @@ SWIFT_STAGE_SWIFTFLAGS ?= ""
 # nooelint: oelint.vars.inconspaces - the Python expression adds the blank
 LDFLAGS:append:class-native = "${@' -Wl,-rpath-link,%s/lib/swift/linux' % d.getVar('SWIFT_BUILD_COMPILER_DIR') if d.getVar('SWIFT_BUILD_COMPILER_DIR') else ''}"
 # nooelint: oelint.vars.inconspaces
-EXTRA_OECMAKE:append:class-native = "${@" -DCMAKE_Swift_FLAGS='%s -Xlinker -rpath-link -Xlinker %s/lib/swift/linux'" % (d.getVar('SWIFT_STAGE_SWIFTFLAGS'), d.getVar('SWIFT_BUILD_COMPILER_DIR')) if d.getVar('SWIFT_BUILD_COMPILER_DIR') else ''}"
+EXTRA_OECMAKE:append:class-native = "${@" -DCMAKE_Swift_COMPILER=%s/bin/swiftc -DCMAKE_Swift_FLAGS='%s -Xlinker -rpath-link -Xlinker %s/lib/swift/linux'" % (d.getVar('SWIFT_BUILD_COMPILER_DIR'), d.getVar('SWIFT_STAGE_SWIFTFLAGS'), d.getVar('SWIFT_BUILD_COMPILER_DIR')) if d.getVar('SWIFT_BUILD_COMPILER_DIR') else ''}"
 
 # Where this stage installs. Bootstrap stages stay out of the regular prefix.
 SWIFT_STAGE_PREFIX ?= "${prefix}"
@@ -53,19 +67,14 @@ SWIFT_STAGE_PREFIX ?= "${prefix}"
 # swift-llvm-native, the swiftlang fork of SWIFT_VERSION.
 SWIFT_LLVM_PREFIX ?= "${SWIFT_LLVM_PREFIX_NATIVE}"
 
-# cmark is a build-time only dependency of the compiler (doc comments). The
-# target triple and the sysroot are not part of the compiler and CFLAGS, but of
-# HOST_CC_ARCH and TOOLCHAIN_OPTIONS, which CMake gets like the cmake class
-# passes them.
+# cmark is a build-time only dependency of the compiler (doc comments). It
+# gets the toolchain file of the cmake class, like the compiler itself.
 SWIFT_CMARK_BUILDDIR = "${WORKDIR}/build-cmark"
 
 do_configure:prepend() {
     cmake -G Ninja -S ${SWIFT_CMARK_SRCDIR} -B ${SWIFT_CMARK_BUILDDIR} \
+        -DCMAKE_TOOLCHAIN_FILE=${WORKDIR}/toolchain.cmake \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_C_COMPILER="${OECMAKE_C_COMPILER}" \
-        -DCMAKE_CXX_COMPILER="${OECMAKE_CXX_COMPILER}" \
-        -DCMAKE_C_FLAGS="${HOST_CC_ARCH}${TOOLCHAIN_OPTIONS} ${CFLAGS}" \
-        -DCMAKE_CXX_FLAGS="${HOST_CC_ARCH}${TOOLCHAIN_OPTIONS} ${CXXFLAGS}" \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DCMARK_TESTS=OFF \
         -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
@@ -83,7 +92,6 @@ OECMAKE_TARGET_COMPILE = "${@d.getVar('SWIFT_INSTALL_COMPONENTS').replace(';', '
 EXTRA_OECMAKE = "\
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=${SWIFT_STAGE_PREFIX} \
-    -DCMAKE_LINKER_TYPE=LLD \
     -DLLVM_DIR=${SWIFT_LLVM_PREFIX}/lib/cmake/llvm \
     -DClang_DIR=${SWIFT_LLVM_PREFIX}/lib/cmake/clang \
     -DSWIFT_PREBUILT_CLANG=ON \
@@ -107,11 +115,6 @@ EXTRA_OECMAKE = "\
     -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=ON \
     -DSWIFT_INSTALL_COMPONENTS='${SWIFT_INSTALL_COMPONENTS}' \
 "
-
-# CMake honours CMAKE_LINKER_TYPE from 3.29 on (scarthgap has 3.28, wrynose
-# 4.x). LLVM then adds lld-only flags to the linker flags, which reach the
-# libdispatch sub-build, and that one links with the default linker.
-EXTRA_OECMAKE:remove = "${@'-DCMAKE_LINKER_TYPE=LLD' if 'wrynose' in (d.getVar('LAYERSERIES_CORENAMES') or '').split() else ''}"
 
 # Swift links lib/swift{,_static}/clang to the clang resource directory it
 # found at configure time, as an absolute path. Make it relative so the

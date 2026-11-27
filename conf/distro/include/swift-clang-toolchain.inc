@@ -66,5 +66,9 @@ TUNE_CCARGS_MARCH_OPTS:append:toolchain-swiftclang = "${SWIFT_CLANG_MARCH_OPTS_A
 LDFLAGS:toolchain-swiftclang:class-nativesdk = "${BUILDSDK_LDFLAGS} \
     -Wl,-rpath-link,${STAGING_LIBDIR}/.. \
     -Wl,-rpath,${libdir}/.."
-LDFLAGS:append:toolchain-swiftclang:class-nativesdk:x86-64 = " -Wl,-dynamic-linker,${base_libdir}/ld-linux-x86-64.so.2"
-LDFLAGS:append:toolchain-swiftclang:class-nativesdk:aarch64 = " -Wl,-dynamic-linker,${base_libdir}/ld-linux-aarch64.so.1"
+# The SDK hosts are glibc, x86_64 or aarch64 (swift-clang.bbclass). swift-base
+# passes the loader to the Swift link too.
+SWIFT_SDK_DYNAMIC_LINKER ??= ""
+SWIFT_SDK_DYNAMIC_LINKER:x86-64 = "${base_libdir}/ld-linux-x86-64.so.2"
+SWIFT_SDK_DYNAMIC_LINKER:aarch64 = "${base_libdir}/ld-linux-aarch64.so.1"
+LDFLAGS:append:toolchain-swiftclang:class-nativesdk = " -Wl,-dynamic-linker,${SWIFT_SDK_DYNAMIC_LINKER}"
