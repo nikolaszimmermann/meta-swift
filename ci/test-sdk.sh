@@ -43,4 +43,12 @@ $SWIFT_CLANGCXX -O2 -o "$programs/hello-cxx" "$layer/ci/sdk-test/hello.cpp"
 $READELF -h "$programs/hello-cxx" | grep -E 'Machine'
 $READELF -p .comment "$programs/hello-cxx" | grep -q 'clang version' ||
     { echo "hello-cxx was not compiled by clang" >&2; exit 1; }
+# CMake compiles assembly with the first word of the compiler variable only.
+# The clang link named after the target has to compile for the target alone.
+asm_cc=${SWIFT_CLANGCC%% *}
+printf '.text\n' | "$asm_cc" --sysroot="$SDKTARGETSYSROOT" -c -x assembler \
+    -o "$programs/empty.o" -
+machine=$($READELF -h "$program" | grep 'Machine')
+[ "$($READELF -h "$programs/empty.o" | grep 'Machine')" = "$machine" ] ||
+    { echo "$asm_cc does not assemble for the target:$machine" >&2; exit 1; }
 echo "SDK test passed: $SWIFT_TARGET"
