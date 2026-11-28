@@ -140,7 +140,7 @@ flowchart LR
         native["swift-llvm-native<br/>swift-native<br/>swift-driver-native<br/>swift-foundation-native<br/>swift-foundation-macros-native<br/>swift-dispatch-native<br/>libdispatch-native<br/>cmake-swift-native"]
     end
     subgraph sdk["SDK host, runs the SDK"]
-        nsdk["nativesdk-swift-llvm<br/>nativesdk-swift<br/>nativesdk-swift-driver<br/>nativesdk-swift-stdlib<br/>nativesdk-swift-foundation<br/>nativesdk-swift-dispatch<br/>nativesdk-libdispatch"]
+        nsdk["nativesdk-swift-llvm<br/>swift-clang-cross-canadian<br/>nativesdk-swift<br/>nativesdk-swift-driver<br/>nativesdk-swift-stdlib<br/>nativesdk-swift-foundation<br/>nativesdk-swift-dispatch<br/>nativesdk-libdispatch"]
     end
     subgraph target["Target, runs your code"]
         rt["swift-stdlib<br/>libdispatch<br/>swift-dispatch<br/>swift-foundation"]
@@ -185,8 +185,11 @@ that contains `swiftc`, swift-driver, the private swiftlang clang, and the
 development files of the Swift runtime, Foundation and Dispatch for the
 target. Its environment script sets `SWIFTC`, `SWIFT_TARGET` and `SWIFTFLAGS`
 for the Swift compiler, and `SWIFT_CLANGCC`, `SWIFT_CLANGCXX` and
-`SWIFT_CLANGCPP` for C and C++ code that Swift uses. `CC` and `CXX` stay the
-compilers of the distribution. Set `SWIFTSDK = "0"` to leave Swift out of the
+`SWIFT_CLANGCPP` for C and C++ code that Swift uses. They call the clang
+through links named after the target, like `aarch64-poky-linux-clang`, as
+meta-clang does. So the first word alone compiles for the target too, which
+is all that CMake keeps for assembly. `CC` and `CXX` stay the compilers of
+the distribution. Set `SWIFTSDK = "0"` to leave Swift out of the
 SDK.
 
 ## Support
@@ -266,7 +269,9 @@ labelled `meta-swift`. Each job:
 4. installs the SDK and compiles
    [a Swift program](ci/sdk-test/hello.swift) with it, using Dispatch and
    Foundation, and [a C++ program](ci/sdk-test/hello.cpp) with its private
-   clang (`SWIFT_CLANGCXX`) ([`ci/test-sdk.sh`](ci/test-sdk.sh)),
+   clang (`SWIFT_CLANGCXX`), and checks that the first word of
+   `SWIFT_CLANGCC` alone assembles for the target
+   ([`ci/test-sdk.sh`](ci/test-sdk.sh)),
 5. boots the image in QEMU with `testimage` and runs the ptest of
    `swift-cxx-interop-test` and the program from the SDK
    ([`swift_sdk.py`](lib/oeqa/runtime/cases/swift_sdk.py)) on it,
