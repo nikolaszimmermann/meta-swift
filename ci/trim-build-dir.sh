@@ -42,7 +42,8 @@ fi
 # deployed output, so every run would repeat do_rootfs and do_populate_sdk.
 # Only drop its rootfs and sdk directories, which rm_work leaves for the
 # recipes of RM_WORK_EXCLUDE, and with them its pseudo database, which would
-# still list their files. Its deployed image and stamps stay.
+# still list their files. Its deployed image and stamps stay. The Build step
+# of the workflow drops the do_rootfs stamp of an image without a rootfs.
 excluded=$(bitbake-getvar --value --ignore-undefined RM_WORK_EXCLUDE)
 declare -A keep
 for recipe in $excluded; do

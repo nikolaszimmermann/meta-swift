@@ -136,6 +136,18 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
+          # The trim step drops the rootfs of the kept image but not its
+          # stamps, and a failed job skips the trim. A run that repeats
+          # do_image, because a task hash after do_rootfs changed, then finds
+          # no rootfs. Drop the do_rootfs stamp of every image without a
+          # rootfs: bitbake restores the image from sstate, or runs do_rootfs
+          # again.
+          for done in "$KAS_BUILD_DIR"/tmp/work/*/*/*/deploy-*-image-complete; do
+            work=${done%/*}
+            if [ -d "$done" ] && [ ! -d "$work/rootfs" ]; then
+              rm -f "$KAS_BUILD_DIR/tmp/stamps/${work#"$KAS_BUILD_DIR/tmp/work/"}".do_rootfs.*
+            fi
+          done
           "$RUNNER_TEMP/kas-container" --runtime-args "$KAS_RUNTIME_ARGS_CI" \
             build "ci/kas/${{ matrix.config }}.yml" 2>&1 | tee "$RUNNER_TEMP/build.log"
 
